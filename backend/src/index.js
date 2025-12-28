@@ -1,3 +1,6 @@
+// Load environment variables
+require('dotenv').config();
+
 // Import the express library
 const express = require('express');
 const cors = require('cors');
@@ -5,11 +8,16 @@ const cors = require('cors');
 // Create an instance of express (the app)
 const app = express();
 
-// Middleware setup
+// Middleware
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 
-// Basic route
+// Import routes
+const taskRoutes = require('./routes/taskRoutes');
+
+// Routes
+app.use('/api/tasks', taskRoutes);
+
 app.get('/', (req, res) => {
     res.json({
         message: 'Welcome to the Blossom Task Manager API!',
@@ -57,9 +65,13 @@ app.listen(PORT, () => {
 
         Welcome to your task manager backend
         Local: http://localhost:${PORT}
+
+        Available endpoints:
         API Root: http://localhost:${PORT}/
-        Blossom Endpoint: http://localhost:${PORT}/api/blossom
-        Health Check: http://localhost:${PORT}/api/health
+        Tasks: http://localhost:${PORT}/api/tasks
+        Blossom: http://localhost:${PORT}/api/blossom
+        Health: http://localhost:${PORT}/api/health
+        Garden: http://localhost:${PORT}/api/tasks/garden/blossoms
 
         Press CTRL+C to stop the server.
     `);
