@@ -38,11 +38,21 @@
 blossom-task-manager/
 ├── backend/
 │   ├── src/
-│   │   └── index.js (our server)
-│   ├── package.json (with scripts)
+│   │   ├── controllers/
+│   │   │   └── taskController.js
+│   │   ├── routes/
+│   │   │   └── taskRoutes.js
+│   │   ├── models/
+│   │   │   └── Task.js
+│   │   ├── middleware/
+│   │   ├── utils/
+│   │   └── index.js
+│   ├── package.json
 │   ├── package-lock.json
-│   └── .gitignore
-├── frontend/ (still empty)
+│   ├── .env
+│   ├── .gitignore
+│   └── test-api.sh
+├── frontend/
 ├── README.md
 └── .gitignore
 ```
