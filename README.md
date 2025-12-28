@@ -36,14 +36,15 @@
 ## 📁 Project Structure
 ```
 blossom-task-manager/
-├── backend/ # Node.js + Express server
-│ ├── src/ # Source code
-│ ├── prisma/ # Database schema
-│ └── package.json # Dependencies
-├── frontend/ # React application
-│ ├── src/ # Components and pages
-│ └── package.json # Dependencies
-└── README.md # You are here!
+├── backend/
+│   ├── src/
+│   │   └── index.js (our server)
+│   ├── package.json (with scripts)
+│   ├── package-lock.json
+│   └── .gitignore
+├── frontend/ (still empty)
+├── README.md
+└── .gitignore
 ```
 
 ## 🚀 Getting Started
