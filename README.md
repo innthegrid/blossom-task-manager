@@ -34,6 +34,7 @@
 - **VSCode** - Development environment
 
 ## 📁 Project Structure
+```
 blossom-task-manager/
 ├── backend/ # Node.js + Express server
 │ ├── src/ # Source code
@@ -43,6 +44,7 @@ blossom-task-manager/
 │ ├── src/ # Components and pages
 │ └── package.json # Dependencies
 └── README.md # You are here!
+```
 
 ## 🚀 Getting Started
 ### **Prerequisites**
