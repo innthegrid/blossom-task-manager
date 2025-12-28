@@ -1,6 +1,6 @@
 # 🌸 Blossom - Cherry Blossom Task Manager
 
-**Blossom** is a cherry blossom-themed personal task manager where each task is a petal in your productivity garden.
+**Blossom** is a cherry blossom-themed personal task manager. Grow your goals, one petal at a time.
 
 ## 🌱 Features
 - **User Authentication**: Secure sign up and login
