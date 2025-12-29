@@ -38,23 +38,44 @@
 blossom-task-manager/
 ├── backend/
 │   ├── src/
+│   │   ├── config/
+│   │   │   └── database.js
 │   │   ├── controllers/
-│   │   │   └── taskController.js
-│   │   ├── routes/
-│   │   │   └── taskRoutes.js
 │   │   ├── models/
-│   │   │   └── Task.js
-│   │   ├── middleware/
-│   │   ├── utils/
+│   │   ├── routes/
+│   │   ├── scripts/
 │   │   └── index.js
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   └── migrations/
+│   ├── scripts/
 │   ├── package.json
-│   ├── package-lock.json
-│   ├── .env
-│   ├── .gitignore
-│   └── test-api.sh
+│   └── .env
 ├── frontend/
-├── README.md
-└── .gitignore
+├── .gitignore
+└── README.md
+```
+
+## 🗂️ Database Schema
+```
+PostgreSQL Database (blossom_db)
+├── users                    # User accounts
+│   ├── id (primary key)
+│   ├── email (unique)
+│   ├── password (hashed)
+│   ├── username
+│   └── theme (cherry-blossom)
+│
+└── tasks                   # Task items
+    ├── id (primary key)
+    ├── title
+    ├── description
+    ├── status
+    ├── priority
+    ├── dueDate
+    ├── userId (foreign key → users.id)
+    ├── flowerEmoji (🌸)
+    └── isBlossom (true)
 ```
 
 ## 🚀 Getting Started
