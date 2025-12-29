@@ -23,7 +23,7 @@ const blossomSuccess = (res, data, message = 'Success!', status = 200) => {
 // Get all tasks for a specific user
 const getAllTasks = async (req, res) => {
     try {
-        const userId = req.query.userId || process.env.TEST_USER_ID;
+        const userId = req.userId;
         const { status, priority, includeUser } = req.query;
 
         const tasks = await TaskRepository.findAll(userId, {
@@ -46,7 +46,7 @@ const getAllTasks = async (req, res) => {
                 petals: tasks.length,
                 garden: 'blooming',
             }
-        }, 'Found ${tasks.length} petals in your garden!');
+        }, `Found ${tasks.length} petals in your garden!`);
     } catch (error) {
         console.error('Error fetching tasks:', error);
         blossomError(res, 'Failed to fetch tasks', 500);
@@ -56,7 +56,7 @@ const getAllTasks = async (req, res) => {
 // Get a single task by ID
 const getTaskById = async (req, res) => {
     try {
-        const userId = req.query.userId || process.env.TEST_USER_ID;
+        const userId = req.userId;
         const task = await TaskRepository.findById(req.params.id, userId);
 
         if (!task) {
@@ -80,7 +80,7 @@ const getTaskById = async (req, res) => {
 const createTask = async (req, res) => {
     try {
         const { title, description, priority, dueDate, flowerEmoji } = req.body;
-        const userId = process.env.TEST_USER_ID;
+        const userId = req.userId;
 
         const taskData = {
             title,
@@ -117,7 +117,7 @@ const createTask = async (req, res) => {
 // Update a task
 const updateTask = async (req, res) => {
     try {
-        const userId = process.env.TEST_USER_ID;
+        const userId = req.userId;
         const taskId = req.params.id;
         const updates = req.body;
 
@@ -146,7 +146,7 @@ const updateTask = async (req, res) => {
 // Delete a task
 const deleteTask = async (req, res) => {
     try {
-        const userId = process.env.TEST_USER_ID;
+        const userId = req.userId;
         const taskId = req.params.id;
 
         const deletedTask = await TaskRepository.delete(taskId, userId);
@@ -175,7 +175,7 @@ const deleteTask = async (req, res) => {
 // Get task statistics
 const getTaskStats = async (req, res) => {
     try {
-        const userId = req.query.userId || process.env.TEST_USER_ID;
+        const userId = req.userId;
         const stats = await TaskRepository.getStats(userId);
 
         blossomSuccess(res, {

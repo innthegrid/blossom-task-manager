@@ -27,10 +27,11 @@ model User {
   categories Category[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Blossom-themed field
   theme     String?  @default("cherry-blossom")
 
+  // Password reset functionality
+  resetToken String?
+  resetTokenExpiry DateTime?
   @@map("users")
 }
 

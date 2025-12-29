@@ -1,12 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const taskController = require('../controllers/taskController');
+const { authenticate } = require('../middleware/auth');
 
 // Blossom-themed middleware for logging
 const blossomLogger = (req, res, next) => {
     console.log(`🌸 ${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 };
+
+// Apply authentication to all task routes
+router.use(authenticate);
 
 // Apply blossom logger to all task routes
 router.use(blossomLogger);

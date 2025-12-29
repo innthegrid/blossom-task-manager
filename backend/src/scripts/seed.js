@@ -1,24 +1,29 @@
 const { prisma } = require('../config/database');
+const { hashPassword } = require('../utils/password');
 
 async function seedDatabase() {
   console.log('🌸 Starting database seed...');
 
   try {
-    // Clear existing data (optional)
+    // Clear existing data
     await prisma.task.deleteMany({});
     await prisma.user.deleteMany({});
+
+    // Hash password before creating user
+    const hashedPassword = await hashPasword('blossom123');
 
     // Create a test user
     const user = await prisma.user.create({
       data: {
         email: 'blossom@example.com',
-        password: 'hashed_password_here', // We'll fix this later with bcrypt
+        password: hashedPassword,
         username: 'CherryBlossomFan',
         theme: 'cherry-blossom'
       }
     });
 
     console.log(`🌸 Created user: ${user.email} (ID: ${user.id})`);
+    console.log(`🌸 Test password: blossom123`);
 
     // Create some sample tasks for the user
     const sampleTasks = [
@@ -69,7 +74,7 @@ async function seedDatabase() {
       const task = await prisma.task.create({
         data: taskData
       });
-      console.log(`  Created task: ${task.title}`);
+      console.log(`Created task: ${task.title}`);
     }
 
     console.log(`

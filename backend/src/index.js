@@ -18,9 +18,11 @@ app.use(express.json()); // Parse JSON request bodies
 
 // Import routes
 const taskRoutes = require('./routes/taskRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // Routes
 app.use('/api/tasks', taskRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
     res.json({
@@ -73,12 +75,14 @@ app.listen(PORT, () => {
         Available endpoints:
         API Root: http://localhost:${PORT}/
         Tasks: http://localhost:${PORT}/api/tasks
+        Auth: http://localhost:${PORT}/api/auth
         Stats: http://localhost:${PORT}/api/tasks/stats
         Blossom: http://localhost:${PORT}/api/blossom
         Health: http://localhost:${PORT}/api/health
         Garden: http://localhost:${PORT}/api/tasks/garden/blossoms
 
         Database: PostgreSQL + Prisma
+        Auth: JWT Tokens
         Theme: Cherry Blossom
 
         Press CTRL+C to stop the server.
