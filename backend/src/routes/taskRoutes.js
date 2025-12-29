@@ -4,7 +4,7 @@ const taskController = require('../controllers/taskController');
 
 // Blossom-themed middleware for logging
 const blossomLogger = (req, res, next) => {
-    console.log(`🌸 ${new Date().toISOString()} = ${req.method} ${req.path}`);
+    console.log(`🌸 ${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 };
 
@@ -13,6 +13,9 @@ router.use(blossomLogger);
 
 // Get all tasks (with optional user filter)
 router.get('/', taskController.getAllTasks);
+
+// Get task statistics
+router.get('/stats', taskController.getTaskStats);
 
 // Get a specific task by ID
 router.get('/:id', taskController.getTaskById);
@@ -32,7 +35,8 @@ router.get('/garden/blossoms', (req, res) => {
         message: 'Welcome to your cherry blossom garden!',
         petals: ['Create', 'Read', 'Update', 'Delete'],
         gardenSize: 'Growing every day!',
-        tip: 'Grow your goals, one petal at a time.'
+        tip: 'Grow your goals, one petal at a time.',
+        database: 'PostgreSQL + Prisma'
     });
 });
 

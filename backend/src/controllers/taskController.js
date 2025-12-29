@@ -1,47 +1,63 @@
-const { tasks, generateId, Task } = require('../models/Task');
+const { TaskRepository } = require('../models/Task');
 
 // Helper function to respond with blossom-themed errors
 const blossomError = (res, message, status = 400) => {
     res.status(status).json({
         error: message,
-        suggestion: 'Keep calm and blossom on!',
-        status: 'error'
+        suggestion: 'Try again with valid data, petal!',
+        status: 'error',
+        timestamp: new Date().toISOString()
     });
 };
 
 // Helper function for success responses
 const blossomSuccess = (res, data, message = 'Success!', status = 200) => {
     res.status(status).json({
-        ...data,
+        data,
         message,
-        status: 'success'
+        status: 'success',
+        timestamp: new Date().toISOString()
     });
 };
 
 // Get all tasks for a specific user
-const getAllTasks = (req, res) => {
+const getAllTasks = async (req, res) => {
     try {
-        // In real practice, we would get userId from auth token
-        // For now, we will use a hardcoded userId from query params
-        const userId = req.query.userId || 'user123';
+        const userId = req.query.userId || process.env.TEST_USER_ID;
+        const { status, priority, includeUser } = req.query;
 
-        const userTasks = tasks.filter(task => task.userId === userId);
+        const tasks = await TaskRepository.findAll(userId, {
+            status,
+            priority,
+            includeUser: includeUser === 'true'
+        });
+
+        // Get statistics for the response
+        const stats = await TaskRepository.getStats(userId);
 
         blossomSuccess(res, {
-            tasks: userTasks,
-            count: userTasks.length,
-            userId,
-            petalCount: userTasks.length
-        }), 'Found ${userTasks.length} petals in your garden!';
+            tasks,
+            meta: {
+                count: tasks.length,
+                userId,
+                ...stats
+            },
+            blossom: {
+                petals: tasks.length,
+                garden: 'blooming',
+            }
+        }, 'Found ${tasks.length} petals in your garden!');
     } catch (error) {
+        console.error('Error fetching tasks:', error);
         blossomError(res, 'Failed to fetch tasks', 500);
     }
 };
 
 // Get a single task by ID
-const getTaskById = (req, res) => {
+const getTaskById = async (req, res) => {
     try {
-        const task = tasks.find(t => t.id === req.params.id);
+        const userId = req.query.userId || process.env.TEST_USER_ID;
+        const task = await TaskRepository.findById(req.params.id, userId);
 
         if (!task) {
             return blossomError(res, 'Task not found - petal has fallen!', 404);
@@ -49,95 +65,131 @@ const getTaskById = (req, res) => {
 
         blossomSuccess(res, {
             task,
-            flower: '🌸',
-            status: 'Petal found!'
-        });
+            blossom: {
+                emoji: task.flowerEmoji || '🌸',
+                isBlossom: task.isBlossom
+            }
+        }, 'Petal found in your garden!');
     } catch (error) {
+        console.error('Error fetching task:', error);
         blossomError(res, 'Failed to fetch task', 500);
     }
 };
 
 // Create a new task
-const createTask = (req, res) => {
+const createTask = async (req, res) => {
     try {
-        const { title, description, priority = 'medium', dueDate } = req.body;
+        const { title, description, priority, dueDate, flowerEmoji } = req.body;
+        const userId = process.env.TEST_USER_ID;
 
-        // Basic validation
-        if (!title || title.trim() === '') {
-            return blossomError(res, 'Task title is required - every petal needs a name!');
-        }
-
-        const newTask = new Task(
-            generateId(),
-            title.trim(),
-            description || '',
-            'user123', // hardcoded for now, will come from auth later
-            'pending',
+        const taskData = {
+            title,
+            description,
             priority,
-            dueDate ? new Date(dueDate) : null
-        );
+            dueDate: dueDate ? new Date(dueDate) : null,
+            userId,
+            flowerEmoji
+        };
 
-        tasks.push(newTask);
+        const task = await TaskRepository.create(taskData);
+
+        // Get updated statistics
+        const stats = await TaskRepository.getStats(userId);
 
         blossomSuccess(res, {
-            task: newTask,
-            petalAdded: true,
-            totalPetals: tasks.filter(t => t.userId === 'user123').length
+            task,
+            meta: {
+                totalPetals: stats.total,
+                newPetal: true
+            }
         }, 'New petal added to your blossom!', 201);
     } catch (error) {
-        blossomError(res, 'Failed to create task', 500);
+        console.error('Error creating task:', error);
+
+        if (error.message.startsWith('Validation failed')) {
+            blossomError(res, error.message, 400);
+        } else {
+            blossomError(res, 'Failed to create task', 500);
+        }
     }
 };
 
 // Update a task
-const updateTask = (req, res) => {
+const updateTask = async (req, res) => {
     try {
+        const userId = process.env.TEST_USER_ID;
         const taskId = req.params.id;
         const updates = req.body;
 
-        const taskIndex = tasks.findIndex(t => t.id === taskId);
-
-        if (taskIndex === -1) {
-            return blossomError(res, 'Task not found - petal has fallen!', 404);
-        }
-
-        // Update the task
-        tasks[taskIndex] = {
-            ...tasks[taskIndex],
-            ...updates,
-            updatedAt: new Date()
-        };
+        const task = await TaskRepository.update(taskId, userId, updates);
 
         blossomSuccess(res, {
-            task: tasks[taskIndex],
-            updated: true,
-            blossomStatus: 'Petal refreshed!'
-        });
+            task,
+            blossom: {
+                status: 'refreshed',
+                emoji: '💦🌸'
+            }
+        }, 'Petal refreshed!');
     } catch (error) {
-        blossomError(res, 'Failed to update task', 500);
+        console.error('Error updating task:', error);
+
+        if (error.message.includes('not found')) {
+            blossomError(res, error.message, 404);
+        } else if (error.message.startsWith('Validation failed')) {
+            blossomError(res, error.message, 400);
+        } else {
+            blossomError(res, 'Failed to update task', 500);
+        }
     }
 };
 
 // Delete a task
-const deleteTask = (req, res) => {
+const deleteTask = async (req, res) => {
     try {
+        const userId = process.env.TEST_USER_ID;
         const taskId = req.params.id;
-        const taskIndex = tasks.findIndex(t => t.id === taskId);
 
-        if (taskIndex === -1) {
-            return blossomError(res, 'Task not found - petal has already fallen!', 404);
-        }
+        const deletedTask = await TaskRepository.delete(taskId, userId);
 
-        const deletedTask = tasks[taskIndex];
-        tasks.splice(taskIndex, 1);
+        // Get updated statistics
+        const stats = await TaskRepository.getStats(userId);
 
         blossomSuccess(res, {
             deletedTask,
-            remainingPetals: tasks.filter(t => t.userId === 'user123').length,
-            message: 'Petal released to blossom again elsewhere'
-        });
+            meta: {
+                remainingPetals: stats.total,
+                gardenStatus: 'still blooming'
+            }
+        }, 'Petal released to blossom again elsewhere!');
     } catch (error) {
-        blossomError(res, 'Failed to delete task', 500);
+        console.error('Error deleting task:', error);
+        
+        if (error.message.includes('not found')) {
+            blossomError(res, error.message, 404);
+        } else {
+            blossomError(res, 'Failed to delete task', 500);
+        }
+    }
+};
+
+// Get task statistics
+const getTaskStats = async (req, res) => {
+    try {
+        const userId = req.query.userId || process.env.TEST_USER_ID;
+        const stats = await TaskRepository.getStats(userId);
+
+        blossomSuccess(res, {
+            stats,
+            blossom: {
+                gardenHealth: stats.completionRate > 50 ? 'thriving' : 'needs care',
+                recommendation: stats.highPriority > 0 ?
+                    `Focus on ${stats.highPriority} high priority petals` :
+                    'Your garden is balanced!'
+            }
+        }, 'Garden statistics gathered!');
+    } catch (error) {
+        console.error('Error getting stats:', error);
+        blossomError(res, 'Failed to get statistics', 500);
     }
 };
 
@@ -147,5 +199,6 @@ module.exports = {
     getTaskById,
     createTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    getTaskStats
 };

@@ -4,9 +4,13 @@ require('dotenv').config();
 // Import the express library
 const express = require('express');
 const cors = require('cors');
+const { connectDB } = require('./config/database');
 
 // Create an instance of express (the app)
 const app = express();
+
+// Connect to database
+connectDB();
 
 // Middleware
 app.use(cors()); // Enable CORS for all routes
@@ -69,9 +73,13 @@ app.listen(PORT, () => {
         Available endpoints:
         API Root: http://localhost:${PORT}/
         Tasks: http://localhost:${PORT}/api/tasks
+        Stats: http://localhost:${PORT}/api/tasks/stats
         Blossom: http://localhost:${PORT}/api/blossom
         Health: http://localhost:${PORT}/api/health
         Garden: http://localhost:${PORT}/api/tasks/garden/blossoms
+
+        Database: PostgreSQL + Prisma
+        Theme: Cherry Blossom
 
         Press CTRL+C to stop the server.
     `);
