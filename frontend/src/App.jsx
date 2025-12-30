@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import LoginPage from './pages/LoginPage'
-import Dashboard from './pages/DashboardPage'
+import DashboardPage from './pages/DashboardPage'
 
 function App() {
   return (
