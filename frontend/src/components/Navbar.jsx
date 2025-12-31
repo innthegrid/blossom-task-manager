@@ -21,9 +21,7 @@ const Navbar = () => {
   }
 
   const navLinks = [
-    { name: 'Dashboard',
-      href: '/',
-      icon: <Home className="w-5 h-5" /> },
+    { name: 'Dashboard', href: '/', icon: <Home className="w-5 h-5" /> },
     {
       name: 'Tasks',
       href: '/tasks',
@@ -65,28 +63,20 @@ const Navbar = () => {
           {/* User Section - Login or User/Logout */}
           <div className="hidden sm:flex sm:items-center">
             <div className="flex items-center gap-4">
-              {user ? (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blossom-mint rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-blossom-dark" />
-                    </div>
-                    <span className="text-sm text-blossom-dark">
-                      {user.username || user.email.split('@')[0]}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="btn-blossom-outline py-2 px-4 text-sm"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
-                <a href="/login" className="btn-blossom py-2 px-4 text-sm">
-                  Sign In
-                </a>
-              )}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blossom-green-bg rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-blossom-green-text" />
+                </div>
+                <span className="text-sm text-blossom-dark">
+                  {user?.username || user?.email?.split('@')[0] || 'User'}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="btn-blossom-outline py-2 px-4 text-sm"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -121,38 +111,26 @@ const Navbar = () => {
                 {link.name}
               </a>
             ))}
-            {user ? (
-              <>
-                <div className="px-4 py-3 border-t border-blossom-bg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blossom-mint rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-blossom-dark" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-blossom-dark">
-                        {user.username || user.email.split('@')[0]}
-                      </p>
-                      <p className="text-xs text-blossom-pink">{user.email}</p>
-                    </div>
-                  </div>
+            <div className="px-4 py-3 border-t border-blossom-bg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blossom-green-bg rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-blossom-green-text" />
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left text-blossom-pink hover:text-blossom-dark hover:bg-blossom-bg pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium flex items-center gap-3"
-                >
-                  <LogOut className="w-5 h-5" />
-                  Logout
-                </button>
-              </>
-            ) : (
-              <a
-                href="/login"
-                className="block text-center mx-4 my-2 btn-blossom"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Sign In
-              </a>
-            )}
+                <div>
+                  <p className="text-sm font-medium text-blossom-dark">
+                    {user?.username || user?.email?.split('@')[0] || 'User'}
+                  </p>
+                  <p className="text-xs text-blossom-pink">{user?.email || ''}</p>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full text-left text-blossom-pink hover:text-blossom-dark hover:bg-blossom-bg pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium flex items-center gap-3"
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
+            </button>
           </div>
         </div>
       )}
