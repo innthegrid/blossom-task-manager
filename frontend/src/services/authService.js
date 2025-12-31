@@ -13,7 +13,16 @@ export const authService = {
       
       return response.data
     } catch (error) {
-      throw error.response?.data || { error: 'Registration failed' }
+      // Check for backend validation errors
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error)
+      } else if (error.response?.data?.errors) {
+        // Handle express-validator errors
+        const errors = error.response.data.errors
+        const errorMessages = errors.map(err => err.msg).join(', ')
+        throw new Error(errorMessages)
+      }
+      throw new Error('Registration failed. Please try again.')
     }
   },
 
