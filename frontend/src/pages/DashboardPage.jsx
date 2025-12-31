@@ -4,11 +4,14 @@ import {
   AlertCircle,
   TrendingUp,
   Plus,
-  Flower,
+  Flower2,
   Calendar,
   Star,
   Leaf,
-  Sparkles,
+  HeartPlus,
+  ChartColumn,
+  Sprout,
+  Pencil,
 } from 'lucide-react'
 
 const DashboardPage = () => {
@@ -44,7 +47,7 @@ const DashboardPage = () => {
       id: 3,
       title: 'Add fertilizer',
       description: 'Nutrients for spring blooming',
-      status: 'pending',
+      status: 'overdue',
       priority: 'low',
       dueDate: '2024-04-20',
       emoji: '🌱',
@@ -61,15 +64,15 @@ const DashboardPage = () => {
   ]
 
   const priorityColors = {
-    high: 'bg-red-100 text-red-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    low: 'bg-green-100 text-green-800',
+    high: 'bg-blossom-red-bg text-blossom-red-text',
+    medium: 'bg-blossom-yellow-bg text-blossom-yellow-text',
+    low: 'bg-blossom-green-bg text-blossom-green-text',
   }
 
   const statusIcons = {
-    completed: <CheckCircle className="w-5 h-5 text-blossom-mint" />,
-    pending: <Clock className="w-5 h-5 text-blossom-peach" />,
-    overdue: <AlertCircle className="w-5 h-5 text-blossom-bright" />,
+    completed: <CheckCircle className="w-5 h-5 text-blossom-green-text" />,
+    pending: <Clock className="w-5 h-5 text-blossom-yellow-text" />,
+    overdue: <AlertCircle className="w-5 h-5 text-blossom-red-text" />,
   }
 
   return (
@@ -77,94 +80,44 @@ const DashboardPage = () => {
       {/* Welcome Banner */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-blossom-pink to-blossom-bright rounded-full flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
           <div>
             <h1 className="text-3xl font-heading text-blossom-dark">
-              Welcome back! 🌸
+              Welcome back! Let's tend to your productivity garden.
             </h1>
-            <p className="text-blossom-soft">
-              Your blossom garden is looking healthy today
-            </p>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Tasks */}
-        <div className="card-blossom">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blossom-soft text-sm">Total Petals</p>
-              <p className="text-3xl font-bold text-blossom-dark mt-1">
-                {stats.total}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blossom-pink/10 rounded-full flex items-center justify-center">
-              <Flower className="w-6 h-6 text-blossom-pink" />
-            </div>
-          </div>
-        </div>
-
-        {/* Completed Tasks */}
-        <div className="card-blossom">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blossom-soft text-sm">Bloomed</p>
-              <p className="text-3xl font-bold text-blossom-dark mt-1">
-                {stats.completed}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blossom-mint/10 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-blossom-mint" />
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Tasks */}
-        <div className="card-blossom">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blossom-soft text-sm">Growing</p>
-              <p className="text-3xl font-bold text-blossom-dark mt-1">
-                {stats.pending}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blossom-peach/10 rounded-full flex items-center justify-center">
-              <Clock className="w-6 h-6 text-blossom-peach" />
-            </div>
-          </div>
-        </div>
-
-        {/* Completion Rate */}
-        <div className="card-blossom">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blossom-soft text-sm">Garden Health</p>
-              <p className="text-3xl font-bold text-blossom-dark mt-1">
-                {stats.completionRate}%
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blossom-bright/10 rounded-full flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-blossom-bright" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Tasks & Quick Actions */}
+      {/* Quick Add Task & Recent Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Tasks */}
         <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
+
+          {/* Quick Add Task */}
+          <div className="card-blossom">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blossom-pink/10 rounded-full flex items-center justify-center">
+                <Plus className="w-6 h-6 text-blossom-pink" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium text-blossom-dark mb-1">
+                  Add a new flower
+                </h3>
+                <p className="text-blossom-pink text-sm">
+                  What goal would you like to grow today?
+                </p>
+              </div>
+              <button className="btn-blossom">Create Task</button>
+            </div>
+          </div>
+
+          {/* Recent Tasks */}
+          <div className="mt-8 flex items-center justify-between mb-4">
             <h2 className="text-2xl font-heading text-blossom-dark">
-              Recent Petals
+              Recently Planted
             </h2>
             <a
               href="/tasks"
-              className="text-blossom-pink hover:text-blossom-bright text-sm font-medium flex items-center gap-2"
+              className="text-blossom-pink hover:text-blossom-dark text-sm font-medium flex items-center gap-2"
             >
               View all
               <span className="text-lg">→</span>
@@ -176,14 +129,14 @@ const DashboardPage = () => {
               <div key={task.id} className="card-blossom">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-blossom-bg rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 flex items-center justify-center">
                       <span className="text-xl">{task.emoji}</span>
                     </div>
                     <div>
                       <h3 className="font-medium text-blossom-dark">
                         {task.title}
                       </h3>
-                      <p className="text-blossom-soft text-sm mt-1">
+                      <p className="text-blossom-pink text-sm mt-1">
                         {task.description}
                       </p>
                       <div className="flex items-center gap-3 mt-3">
@@ -192,7 +145,7 @@ const DashboardPage = () => {
                         >
                           {task.priority} priority
                         </span>
-                        <div className="flex items-center gap-1 text-blossom-soft text-sm">
+                        <div className="flex items-center gap-1 text-blossom-pink text-sm">
                           <Calendar className="w-4 h-4" />
                           {task.dueDate}
                         </div>
@@ -201,32 +154,13 @@ const DashboardPage = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     {statusIcons[task.status]}
-                    <button className="text-blossom-soft hover:text-blossom-pink transition-colors">
-                      <span className="sr-only">Edit</span>
-                      ✏️
+                    <button className="text-blossom-pink hover:text-blossom-dark transition-colors">
+                      <Pencil className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Quick Add Task */}
-          <div className="mt-8 card-blossom">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blossom-pink/10 rounded-full flex items-center justify-center">
-                <Plus className="w-6 h-6 text-blossom-pink" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-blossom-dark mb-1">
-                  Add a new petal
-                </h3>
-                <p className="text-blossom-soft text-sm">
-                  What goal would you like to grow today?
-                </p>
-              </div>
-              <button className="btn-blossom">Create Task</button>
-            </div>
           </div>
         </div>
 
@@ -234,26 +168,29 @@ const DashboardPage = () => {
         <div className="space-y-6">
           {/* Garden Health */}
           <div className="card-blossom">
-            <h3 className="font-heading text-lg text-blossom-dark mb-4">
-              🌸 Garden Health
-            </h3>
+            <div className="flex items-center gap-2 mb-2">
+              <HeartPlus className="w-6 h-6 text-blossom-dark" />
+              <h3 className="font-heading text-lg text-blossom-dark">
+                Garden Health
+              </h3>
+            </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-blossom-soft">Today's Progress</span>
+                <span className="text-blossom-pink">Today's Progress</span>
                 <span className="font-medium text-blossom-dark">
                   3/5 petals
                 </span>
               </div>
-              <div className="h-2 bg-blossom-bg rounded-full overflow-hidden">
+              <div className="h-2 bg-blossom-pink/30 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-blossom-pink to-blossom-bright"
-                  style={{ width: '60%' }}
+                  className="h-full bg-blossom-pink transition-all duration-500 ease-out"
+                  style={{ width: '90%' }}
                 ></div>
               </div>
               <div className="flex items-center justify-between mt-4">
-                <span className="text-blossom-soft">Weekly Streak</span>
+                <span className="text-blossom-pink">Weekly Streak</span>
                 <span className="font-medium text-blossom-dark flex items-center gap-1">
-                  <Flame className="w-4 h-4 text-blossom-bright" />7 days
+                  <Flame className="w-4 h-4 text-blossom-red-text" />7 days
                 </span>
               </div>
             </div>
@@ -261,34 +198,37 @@ const DashboardPage = () => {
 
           {/* Quick Stats */}
           <div className="card-blossom">
-            <h3 className="font-heading text-lg text-blossom-dark mb-4">
-              📊 Quick Stats
-            </h3>
+            <div className="flex items-center gap-2 mb-2">
+              <ChartColumn className="w-6 h-6 text-blossom-dark" />
+              <h3 className="font-heading text-lg text-blossom-dark">
+                Quick Stats
+              </h3>
+            </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <Star className="w-4 h-4 text-red-600" />
+                  <div className="w-8 h-8 bg-blossom-red-bg rounded-full flex items-center justify-center">
+                    <Star className="w-4 h-4 text-blossom-red-text" />
                   </div>
-                  <span className="text-blossom-soft">High Priority</span>
+                  <span className="text-blossom-pink">High Priority</span>
                 </div>
                 <span className="font-bold text-blossom-dark">2</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <Leaf className="w-4 h-4 text-yellow-600" />
+                  <div className="w-8 h-8 bg-blossom-yellow-bg rounded-full flex items-center justify-center">
+                    <Leaf className="w-4 h-4 text-blossom-yellow-text" />
                   </div>
-                  <span className="text-blossom-soft">Due This Week</span>
+                  <span className="text-blossom-pink">Due This Week</span>
                 </div>
                 <span className="font-bold text-blossom-dark">4</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  <div className="w-8 h-8 bg-blossom-green-bg rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-blossom-green-text" />
                   </div>
-                  <span className="text-blossom-soft">Completed Today</span>
+                  <span className="text-blossom-pink">Completed Today</span>
                 </div>
                 <span className="font-bold text-blossom-dark">1</span>
               </div>
@@ -296,42 +236,19 @@ const DashboardPage = () => {
           </div>
 
           {/* Blossom Tip */}
-          <div className="card-blossom bg-gradient-to-br from-blossom-pink/5 to-blossom-mint/5">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <span className="text-xl">💡</span>
-              </div>
-              <div>
-                <h4 className="font-heading text-blossom-dark mb-2">
-                  Blossom Tip
-                </h4>
-                <p className="text-blossom-soft text-sm">
-                  Just like cherry blossoms, tasks are most beautiful when given
-                  attention at the right time. Check your high-priority petals
-                  daily!
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
           <div className="card-blossom">
-            <h3 className="font-heading text-lg text-blossom-dark mb-4">
-              ⚡ Quick Actions
-            </h3>
-            <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blossom-bg transition-colors">
-                <span className="text-blossom-dark">Mark All Today's Done</span>
-                <span className="text-blossom-pink">→</span>
-              </button>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blossom-bg transition-colors">
-                <span className="text-blossom-dark">Schedule for Tomorrow</span>
-                <span className="text-blossom-pink">→</span>
-              </button>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blossom-bg transition-colors">
-                <span className="text-blossom-dark">View Completed</span>
-                <span className="text-blossom-pink">→</span>
-              </button>
+            <div className="flex items-center gap-2 mb-2">
+              <Sprout className="w-6 h-6 text-blossom-dark" />
+              <h3 className="font-heading text-lg text-blossom-dark">
+                Blossom Tip
+              </h3>
+            </div>
+            <div>
+              <p className="text-blossom-pink text-sm">
+                Just like cherry blossoms, tasks are most beautiful when given
+                attention at the right time. Check your high-priority petals
+                daily!
+              </p>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LogIn, Mail, Lock, Sparkles } from 'lucide-react'
 import { authService } from '../services/authService'
+import ImageLogo from '../components/ImageLogo'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('')
@@ -29,15 +30,13 @@ const LoginPage = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blossom-pink to-blossom-bright rounded-full flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
+            <ImageLogo size="xlarge" showText={false} />
           </div>
-          <h1 className="text-3xl font-bold text-blossom-dark mb-2">
+          <h1 className="text-3xl font-heading text-blossom-dark mb-2">
             Welcome Back
           </h1>
-          <p className="text-blossom-soft">
-            Sign in to tend to your blossom garden
+          <p className="text-blossom-pink">
+            Sign in to tend to your Blossom Garden!
           </p>
         </div>
 
@@ -45,19 +44,17 @@ const LoginPage = () => {
         <div className="card-blossom">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Input */}
-            <div>
-              <label className="block text-sm font-medium text-blossom-dark mb-2">
-                Email Address
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-blossom-dark">
+                <Mail className="h-4 w-4 text-blossom-dark" />
+                <span>Email Address</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-blossom-soft" />
-                </div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-blossom pl-10"
+                  className="input-blossom w-full"
                   placeholder="you@example.com"
                   required
                 />
@@ -65,19 +62,18 @@ const LoginPage = () => {
             </div>
 
             {/* Password Input */}
-            <div>
-              <label className="block text-sm font-medium text-blossom-dark mb-2">
-                Password
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-blossom-dark">
+                <Lock className="h-4 w-4 text-blossom-dark" />
+                <span>Password</span>
               </label>
+
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-blossom-soft" />
-                </div>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-blossom pl-10"
+                  className="input-blossom w-full"
                   placeholder="••••••••"
                   required
                 />
@@ -113,23 +109,15 @@ const LoginPage = () => {
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
-            <p className="text-blossom-soft text-sm">
+            <p className="text-blossom-pink text-sm">
               Don't have a garden yet?{' '}
               <a
                 href="/register"
-                className="text-blossom-pink hover:text-blossom-bright font-medium"
+                className="text-blossom-pink hover:text-blossom-dark font-medium"
               >
-                Create one here
+                Sign up here!
               </a>
             </p>
-          </div>
-        </div>
-
-        {/* Demo Info */}
-        <div className="mt-8 text-center">
-          <div className="inline-flex items-center gap-2 text-blossom-soft/60 text-sm">
-            <span className="w-2 h-2 bg-blossom-mint rounded-full"></span>
-            Try: test@example.com / password123
           </div>
         </div>
       </div>

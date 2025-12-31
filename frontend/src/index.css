@@ -5,14 +5,17 @@
 @import "tailwindcss";
 
 /* Cherry blossom theme */
-:root {
-  --color-blossom-pink: #FFB7C5;
-  --color-blossom-soft: #D4A5A5;
-  --color-blossom-bright: #FF9AA2;
+@theme {
+  --color-blossom-dark: #e890a2; /* header & main text */
+  --color-blossom-pink: #ffaabb; /* subtext */
+  --color-blossom-green-text: #7bd4b3;
+  --color-blossom-green-bg: #cdfaea;
+  --color-blossom-yellow-text: #eba678;
+  --color-blossom-yellow-bg: #fce3d2;
+  --color-blossom-red-text: #de7880;
+  --color-blossom-red-bg: #ffd9dd;
+  --color-blossom-blue: #79cad1;
   --color-blossom-bg: #FFF9FB;
-  --color-blossom-mint: #B5EAD7;
-  --color-blossom-peach: #FFDAC1;
-  --color-blossom-dark: #D4A5A5;
 
   --font-sans: 'Lexend', system-ui, sans-serif;
   --font-heading: 'Jua', system-ui, sans-serif;
@@ -52,7 +55,7 @@
     background-color: var(--color-blossom-bg);
   }
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-blossom-soft);
+    background-color: var(--color-blossom-pink);
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -73,7 +76,7 @@
 
 .btn-blossom:hover {
   box-shadow: var(--shadow-blossom-hover);
-  background-color: var(--color-blossom-bright);
+  background-color: var(--color-blossom-dark);
 }
 
 .btn-blossom:active {
@@ -115,7 +118,7 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--color-blossom-soft) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-blossom-pink) 50%, transparent);
   transition: all 300ms;
 }
 
@@ -126,7 +129,7 @@
 }
 
 .input-blossom::placeholder {
-  color: color-mix(in srgb, var(--color-blossom-soft) 70%, transparent);
+  color: color-mix(in srgb, var(--color-blossom-pink) 70%, transparent);
 }
 
 .petal-badge {
