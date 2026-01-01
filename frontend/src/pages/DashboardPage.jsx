@@ -6,24 +6,19 @@ import {
   Plus,
   Calendar,
   Tag,
-  Filter,
-  ChevronDown,
   Edit2,
   Trash2,
-  ChevronRight,
   Star,
-  X,
   Check,
-  Leaf,
   HeartPlus,
   ChartColumn,
   Sprout,
-  Pencil,
 } from 'lucide-react'
 import { taskService } from '../services/taskService'
 import { categoryService } from '../services/categoryService'
 import CategoryManagerModal from '../components/CategoryManagerModal'
 import TaskFormModal from '../components/TaskFormModal'
+import CategoryIcon from '../components/CategoryIcon'
 
 const DashboardPage = () => {
   // States
@@ -403,16 +398,39 @@ const DashboardPage = () => {
                       <div className="flex-1 min-w-0">
                         <div>
                           <div className="flex items-start justify-between">
-                            {/* Title */}
-                            <h3
-                              className={`font-medium text-xl ${
-                                task.status === 'completed'
-                                  ? 'text-blossom-pink opacity-70'
-                                  : 'text-blossom-dark'
-                              }`}
-                            >
-                              {task.title}
-                            </h3>
+                            <div className="flex gap-2">
+                              {/* Title */}
+                              <h3
+                                className={`font-medium text-xl ${
+                                  task.status === 'completed'
+                                    ? 'text-blossom-pink opacity-70'
+                                    : 'text-blossom-dark'
+                                }`}
+                              >
+                                {task.title}
+                              </h3>
+
+                              {/* Category */}
+                              {task.category && (
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-s font-medium font-bold transition-all duration-300 ${
+                                    task.status === 'completed'
+                                      ? 'opacity-30'
+                                      : 'opacity-100'
+                                  }`}
+                                  style={{
+                                    backgroundColor: `${task.category.color}40`,
+                                    color: task.category.color,
+                                  }}
+                                >
+                                  <CategoryIcon
+                                    name={task.category.icon}
+                                    className="w-3.5 h-3.5"
+                                  />
+                                  {task.category.name}
+                                </span>
+                              )}
+                            </div>
 
                             {/* Complete & Actions */}
                             <div className="flex items-center gap-2 ml-2">
@@ -469,20 +487,6 @@ const DashboardPage = () => {
                               <Star className="w-3 h-3 mr-1" />
                               {task.priority}
                             </span>
-
-                            {/* Category */}
-                            {task.category && (
-                              <span
-                                className={`inline-flex items-center gap-1 text-sm text-blossom-pink ${
-                                  task.status === 'completed'
-                                    ? 'opacity-70'
-                                    : ''
-                                }`}
-                              >
-                                <Tag className="w-3 h-3" />
-                                {task.category.name}
-                              </span>
-                            )}
 
                             {/* Due Date */}
                             {task.dueDate && (
@@ -781,7 +785,7 @@ const DashboardPage = () => {
                       <div key={cat.id}>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm text-blossom-dark">
-                            {cat.icon} {cat.name}
+                            {cat.name}
                           </span>
                           <span className="text-xs font-medium text-blossom-pink">
                             {catDone}/{catTotal}
@@ -816,8 +820,13 @@ const DashboardPage = () => {
       {/* Category Manager Modal */}
       <CategoryManagerModal
         isOpen={showCategoryManager}
-        onClose={() => setShowCategoryManager(false)}
+        onClose={() => {
+          setShowCategoryManager(false)
+          fetchData()
+        }}
         onCategoryCreated={fetchData}
+        onCategoryUpdated={fetchData}
+        onCategoryDeleted={fetchData}
       />
     </div>
   )

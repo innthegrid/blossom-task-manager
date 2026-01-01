@@ -48,7 +48,7 @@ const LoginPage = () => {
               <Mail className="h-4 w-4 text-blossom-dark" />
               <span>Email Address</span>
             </label>
-            <div className="relative">
+            <div className="relative text-blossom-dark">
               <input
                 type="email"
                 value={email}
@@ -72,7 +72,7 @@ const LoginPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-blossom w-full"
+                className="input-blossom w-full text-blossom-dark"
                 placeholder="••••••••"
                 required
               />

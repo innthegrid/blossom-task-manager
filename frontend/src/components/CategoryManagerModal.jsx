@@ -1,42 +1,51 @@
 import { useState, useEffect } from 'react'
-import { X, Plus, Tag, Edit2, Trash2, Check } from 'lucide-react'
+import {
+  X,
+  Plus,
+  Tag,
+  Edit2,
+  Trash2,
+  Check,
+  // Import the icons you want to use as presets
+  Sprout,
+  Book,
+  Briefcase,
+  Home,
+  ShoppingCart,
+  Dumbbell,
+  Palette,
+  Music,
+  Plane,
+  GraduationCap,
+  Laptop,
+  Phone,
+  Coffee,
+  Utensils,
+  Heart,
+  PawPrint,
+  Target,
+  Calendar,
+  Star,
+  Leaf,
+} from 'lucide-react'
 import { categoryService } from '../services/categoryService'
+import CategoryIcon, { ICON_MAP } from '../components/CategoryIcon'
 
-// Preset icons for categories
-const PRESET_ICONS = [
-  '🌸',
-  '📚',
-  '💼',
-  '🏠',
-  '🛒',
-  '🏋️',
-  '🎨',
-  '🎵',
-  '✈️',
-  '🎓',
-  '💻',
-  '📞',
-  '🍽️',
-  '🧹',
-  '💵',
-  '❤️',
-  '🐾',
-  '🌱',
-  '🎯',
-  '📅',
-]
+// Map string names to the actual Lucide components
+const PRESET_ICONS = Object.keys(ICON_MAP)
 
 const PRESET_COLORS = [
-  '#FFB7C5',
-  '#D4A5A5',
-  '#7bd4b3',
-  '#FFDAC1',
-  '#B5B5FF',
+  '#7d7d7d',
+  '#a67e6f',
+  '#ff9191',
   '#FFB347',
-  '#C7CEEA',
-  '#FF9AA2',
-  '#79cad1',
-  '#E2F0CB',
+  '#f2bf16',
+  '#87cf51',
+  '#3ad6af',
+  '#519aed',
+  '#807feb',
+  '#bb7be8',
+  '#e87bdd',
 ]
 
 const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
@@ -45,9 +54,15 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
   const [editingCategory, setEditingCategory] = useState(null)
   const [newCategory, setNewCategory] = useState({
     name: '',
-    icon: '🌸',
-    color: '#FFB7C5',
+    icon: 'Sprout', // Store the string key
+    color: '#ff8fa5ff',
   })
+
+  // Helper to render the icon dynamically
+  const IconComponent = ({ name, className }) => {
+    const LucideIcon = ICON_MAP[name] || Tag
+    return <LucideIcon className={className} />
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -68,8 +83,7 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
     e.preventDefault()
     try {
       await categoryService.createCategory(newCategory)
-      setShowForm(false)
-      setNewCategory({ name: '', icon: '🌸', color: '#FFB7C5' })
+      resetForm()
       fetchCategories()
       onCategoryCreated?.()
     } catch (error) {
@@ -81,13 +95,17 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
     e.preventDefault()
     try {
       await categoryService.updateCategory(editingCategory.id, newCategory)
-      setShowForm(false)
-      setEditingCategory(null)
-      setNewCategory({ name: '', icon: '🌸', color: '#FFB7C5' })
+      resetForm()
       fetchCategories()
     } catch (error) {
       console.error('Failed to update category:', error)
     }
+  }
+
+  const resetForm = () => {
+    setShowForm(false)
+    setEditingCategory(null)
+    setNewCategory({ name: '', icon: 'Sprout', color: '#FFB7C5' })
   }
 
   const handleDeleteCategory = async (categoryId) => {
@@ -111,7 +129,7 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-blossom shadow-blossom max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-4 border-b border-blossom-bg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-blossom-bg">
           <div className="flex items-center gap-2">
             <Tag className="w-5 h-5 text-blossom-dark" />
             <h2 className="text-xl font-heading text-blossom-dark">
@@ -126,37 +144,21 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Add Category Button */}
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="flex btn-blossom-outline w-full mb-6"
+              className="btn-blossom-outline w-full mb-6"
             >
-              + Add New Category
+              <Plus className="w-4 h-4 mr-2 inline" /> Add New Category
             </button>
           )}
 
-          {/* Category Form */}
           {showForm && (
-            <div className="card-blossom mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-blossom-dark">
-                  {editingCategory ? 'Edit Category' : 'New Category'}
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowForm(false)
-                    setEditingCategory(null)
-                    setNewCategory({ name: '', icon: '🌸', color: '#FFB7C5' })
-                  }}
-                  className="text-blossom-pink hover:text-blossom-dark"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
+            <div className="card-blossom mb-6 bg-blossom-bg/10">
+              <h3 className="font-medium text-blossom-dark mb-4">
+                {editingCategory ? 'Edit Category' : 'New Category'}
+              </h3>
               <form
                 onSubmit={
                   editingCategory ? handleUpdateCategory : handleCreateCategory
@@ -164,7 +166,7 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium text-blossom-dark mb-2">
+                  <label className="block text-xs font-bold uppercase text-blossom-pink mb-1">
                     Name
                   </label>
                   <input
@@ -173,36 +175,38 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
                     onChange={(e) =>
                       setNewCategory({ ...newCategory, name: e.target.value })
                     }
-                    className="input-blossom"
-                    placeholder="e.g., Work, Personal, Health"
+                    className="input-blossom w-full"
+                    placeholder="e.g., Garden, Reading"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blossom-dark mb-2">
+                  <label className="block text-xs font-bold uppercase text-blossom-pink mb-1">
                     Icon
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {PRESET_ICONS.slice(0, 10).map((icon) => (
+                  <div className="grid grid-cols-5 gap-2">
+                    {PRESET_ICONS.map((iconName) => (
                       <button
-                        key={icon}
+                        key={iconName}
                         type="button"
-                        onClick={() => setNewCategory({ ...newCategory, icon })}
-                        className={`w-10 h-10 flex items-center justify-center rounded-lg text-lg ${
-                          newCategory.icon === icon
-                            ? 'ring-2 ring-blossom-pink bg-blossom-bg'
-                            : 'bg-blossom-bg hover:bg-blossom-pink/10'
+                        onClick={() =>
+                          setNewCategory({ ...newCategory, icon: iconName })
+                        }
+                        className={`p-2 flex items-center justify-center rounded-lg transition-all ${
+                          newCategory.icon === iconName
+                            ? 'bg-blossom-pink text-white scale-110 shadow-sm'
+                            : 'bg-white text-blossom-pink hover:bg-blossom-bg'
                         }`}
                       >
-                        {icon}
+                        <IconComponent name={iconName} className="w-5 h-5" />
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blossom-dark mb-2">
+                  <label className="block text-xs font-bold uppercase text-blossom-pink mb-1">
                     Color
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -213,9 +217,9 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
                         onClick={() =>
                           setNewCategory({ ...newCategory, color })
                         }
-                        className={`w-8 h-8 rounded-full ${
+                        className={`w-6 h-6 rounded-full transition-transform ${
                           newCategory.color === color
-                            ? 'ring-2 ring-blossom-dark ring-offset-2'
+                            ? 'ring-2 ring-blossom-dark ring-offset-2 scale-110'
                             : ''
                         }`}
                         style={{ backgroundColor: color }}
@@ -224,22 +228,14 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="submit"
-                    className="btn-blossom flex-1 flex items-center justify-center gap-2"
-                  >
-                    <Check className="w-4 h-4" />
-                    {editingCategory ? 'Update' : 'Create'}
+                <div className="flex gap-2 pt-2">
+                  <button type="submit" className="btn-blossom flex-1 py-2">
+                    Save
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowForm(false)
-                      setEditingCategory(null)
-                      setNewCategory({ name: '', icon: '🌸', color: '#FFB7C5' })
-                    }}
-                    className="btn-blossom-outline flex-1"
+                    onClick={resetForm}
+                    className="btn-blossom-outline flex-1 py-2"
                   >
                     Cancel
                   </button>
@@ -248,72 +244,47 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
             </div>
           )}
 
-          {/* Categories List */}
           <div className="space-y-3">
-            <h3 className="font-medium text-blossom-dark mb-2">
-              Your Categories ({categories.length})
+            <h3 className="font-medium text-blossom-dark">
+              Current Categories
             </h3>
-
-            {categories.length === 0 ? (
-              <div className="text-center py-8 text-blossom-pink">
-                <Tag className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No categories yet. Create your first one!</p>
-              </div>
-            ) : (
-              categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-blossom-bg group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: category.color }}
-                    >
-                      <span className="text-lg">{category.icon}</span>
-                    </div>
-                    <div>
-                      <div className="font-medium text-blossom-dark">
-                        {category.name}
-                      </div>
-                    </div>
+            {categories.map((category) => (
+              <div
+                key={category.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-blossom-bg group"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm"
+                    style={{ backgroundColor: category.color }}
+                  >
+                    <IconComponent name={category.icon} className="w-5 h-5" />
                   </div>
-
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => {
-                        setEditingCategory(category)
-                        setNewCategory({
-                          name: category.name,
-                          icon: category.icon,
-                          color: category.color,
-                        })
-                        setShowForm(true)
-                      }}
-                      className="text-blossom-pink hover:text-blossom-dark"
-                      title="Edit category"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCategory(category.id)}
-                      className="text-blossom-pink hover:text-blossom-red-text"
-                      title="Delete category"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <span className="font-medium text-blossom-dark">
+                    {category.name}
+                  </span>
                 </div>
-              ))
-            )}
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => {
+                      setEditingCategory(category)
+                      setNewCategory(category)
+                      setShowForm(true)
+                    }}
+                    className="p-1 text-blossom-pink hover:text-blossom-dark"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCategory(category.id)}
+                    className="p-1 text-blossom-pink hover:text-blossom-red-text"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 border-t border-blossom-bg">
-          <button onClick={onClose} className="btn-blossom w-full">
-            Done
-          </button>
         </div>
       </div>
     </div>

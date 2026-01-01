@@ -59,7 +59,7 @@ const RegisterPage = () => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="input-blossom w-full"
+                className="input-blossom w-full text-blossom-dark"
                 placeholder="cherry123"
               />
             </div>
@@ -76,7 +76,7 @@ const RegisterPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input-blossom w-full"
+                className="input-blossom w-full text-blossom-dark"
                 placeholder="you@example.com"
                 required
               />
@@ -95,7 +95,7 @@ const RegisterPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-blossom w-full"
+                className="input-blossom w-full text-blossom-dark"
                 placeholder="••••••••"
                 required
               />

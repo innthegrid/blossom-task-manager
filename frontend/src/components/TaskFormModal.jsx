@@ -250,7 +250,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
                   <option value="">No Category</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.icon} {category.name}
+                      {category.name}
                     </option>
                   ))}
                 </select>
