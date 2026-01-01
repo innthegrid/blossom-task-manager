@@ -34,7 +34,8 @@ const getAllTasks = async (req, res) => {
         const tasks = await prisma.task.findMany({
             where,
             include: {
-                category: true
+                category: true,
+                subtasks: true
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -67,7 +68,10 @@ const getTaskById = async (req, res) => {
         const userId = req.userId;
         const task = await prisma.task.findFirst({
             where: { id: req.params.id, userId },
-            include: { category: true }
+            include: {
+                category: true,
+                subtasks: true
+            }
         });
 
         if (!task) {
@@ -83,71 +87,78 @@ const getTaskById = async (req, res) => {
 
 // Create a new task
 const createTask = async (req, res) => {
-  try {
-    const { title, description, priority, dueDate, categoryId, tags } = req.body;
-    const userId = req.userId;
+    try {
+        const { title, description, priority, dueDate, categoryId, tags, subtasks } = req.body;
+        const userId = req.userId;
 
-    console.log('Received create request:', { title, userId, categoryId, dueDate }); // Debug
+        console.log('Received create request:', { title, userId, categoryId, dueDate }); // Debug
 
-    // Basic validation
-    if (!title || title.trim() === '') {
-      return blossomError(res, 'Task title is required');
+        // Basic validation
+        if (!title || title.trim() === '') {
+            return blossomError(res, 'Task title is required');
+        }
+
+        // Prepare the data
+        const taskData = {
+            title: title.trim(),
+            description: description?.trim() || '',
+            priority: priority || 'medium',
+            userId,
+            status: 'pending',
+            tags: tags || [],
+            subtasks: {
+                create: (subtasks || []).map(sub => ({
+                    title: sub.title,
+                    completed: sub.completed || false
+                }))
+            }
+        };
+
+        // Handle dueDate
+        if (dueDate && dueDate !== '') {
+            if (typeof dueDate === 'string' && dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                taskData.dueDate = new Date(dueDate + 'T00:00:00.000Z');
+            } else {
+                taskData.dueDate = new Date(dueDate);
+            }
+        }
+
+        // Handle categoryId - convert empty string to null
+        if (categoryId && categoryId !== '') {
+            // Verify category belongs to user
+            const category = await prisma.category.findFirst({
+                where: { id: categoryId, userId }
+            });
+            if (!category) {
+                return blossomError(res, 'Category not found or access denied', 404);
+            }
+            taskData.categoryId = categoryId;
+        } else {
+            taskData.categoryId = null;
+        }
+
+        console.log('Task data for creation:', taskData); // Debug
+
+        const task = await prisma.task.create({
+            data: taskData,
+            include: {
+                category: true,
+                subtasks: true
+            }
+        });
+
+        blossomResponse(res, { task }, 'Task created successfully!', 201);
+    } catch (error) {
+        console.error('Error creating task:', error);
+
+        // More detailed error logging
+        if (error.code) {
+            console.error('Prisma error code:', error.code);
+            console.error('Prisma error meta:', error.meta);
+        }
+
+        blossomError(res, `Failed to create task: ${error.message}`, 500);
     }
-
-    // Prepare the data
-    const taskData = {
-      title: title.trim(),
-      description: description?.trim() || '',
-      priority: priority || 'medium',
-      userId,
-      status: 'pending',
-      tags: tags || []
-    };
-
-    // Handle dueDate
-    if (dueDate && dueDate !== '') {
-      if (typeof dueDate === 'string' && dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        taskData.dueDate = new Date(dueDate + 'T00:00:00.000Z');
-      } else {
-        taskData.dueDate = new Date(dueDate);
-      }
-    }
-
-    // Handle categoryId - convert empty string to null
-    if (categoryId && categoryId !== '') {
-      // Verify category belongs to user
-      const category = await prisma.category.findFirst({
-        where: { id: categoryId, userId }
-      });
-      if (!category) {
-        return blossomError(res, 'Category not found or access denied', 404);
-      }
-      taskData.categoryId = categoryId;
-    } else {
-      taskData.categoryId = null;
-    }
-
-    console.log('Task data for creation:', taskData); // Debug
-
-    const task = await prisma.task.create({
-      data: taskData,
-      include: {
-        category: true
-      }
-    });
-
-    blossomResponse(res, { task }, 'Task created successfully!', 201);
-  } catch (error) {
-    console.error('Error creating task:', error);
-    
-    // More detailed error logging
-    if (error.code) {
-      console.error('Prisma error code:', error.code);
-      console.error('Prisma error meta:', error.meta);
-    }
-    
-    blossomError(res, `Failed to create task: ${error.message}`, 500);
-  }
 };
 
 // Update a task
@@ -155,7 +166,7 @@ const updateTask = async (req, res) => {
     try {
         const userId = req.userId;
         const taskId = req.params.id;
-        const updates = req.body;
+        const { subtasks, ...updates } = req.body;
 
         console.log('Received update request:', { taskId, userId, updates }); // Debug
 
@@ -176,6 +187,15 @@ const updateTask = async (req, res) => {
         if (updates.description !== undefined) updateData.description = updates.description.trim();
         if (updates.priority !== undefined) updateData.priority = updates.priority;
         if (updates.status !== undefined) updateData.status = updates.status;
+        if (subtasks !== undefined) {
+            updateData.subtasks = {
+                deleteMany: {}, // Wipe existing subtasks
+                create: subtasks.map(sub => ({
+                    title: sub.title,
+                    completed: sub.completed || false
+                }))
+            };
+        }
 
         // Handle dueDate
         if (updates.dueDate !== undefined) {
@@ -216,7 +236,8 @@ const updateTask = async (req, res) => {
             where: { id: taskId },
             data: updateData,
             include: {
-                category: true
+                category: true,
+                subtasks: true
             }
         });
 

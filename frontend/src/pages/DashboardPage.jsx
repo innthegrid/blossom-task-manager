@@ -101,6 +101,33 @@ const DashboardPage = () => {
     }
   }
 
+  // Toggle subtask completion
+  const handleToggleSubtask = async (task, subtaskIndex) => {
+    try {
+      // 1. Create a deep copy of the subtasks array
+      const updatedSubtasks = [...task.subtasks]
+
+      // 2. Flip the status of the specific subtask
+      updatedSubtasks[subtaskIndex] = {
+        ...updatedSubtasks[subtaskIndex],
+        completed: !updatedSubtasks[subtaskIndex].completed,
+      }
+
+      // 3. Update the task on the server (using existing updateTask endpoint)
+      // We send the full subtasks array because the backend replaces the old list
+      await taskService.updateTask(task.id, { subtasks: updatedSubtasks })
+
+      // 4. Update local state for immediate feedback
+      setTasks(
+        tasks.map((t) =>
+          t.id === task.id ? { ...t, subtasks: updatedSubtasks } : t
+        )
+      )
+    } catch (error) {
+      console.error('Failed to toggle subtask:', error)
+    }
+  }
+
   // Filter tasks based on current filteres
   const filteredTasks = tasks.filter((task) => {
     const isActuallyOverdue = checkIsOverdue(task)
@@ -262,7 +289,7 @@ const DashboardPage = () => {
                   {stats.total} petals growing • {stats.completed} bloomed
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-4">
                 <button
                   onClick={() => {
                     setEditingTask(null)
@@ -378,7 +405,7 @@ const DashboardPage = () => {
                           <div className="flex items-start justify-between">
                             {/* Title */}
                             <h3
-                              className={`font-medium ${
+                              className={`font-medium text-xl ${
                                 task.status === 'completed'
                                   ? 'text-blossom-pink opacity-70'
                                   : 'text-blossom-dark'
@@ -387,8 +414,14 @@ const DashboardPage = () => {
                               {task.title}
                             </h3>
 
-                            {/* Overdue & Actions */}
+                            {/* Complete & Actions */}
                             <div className="flex items-center gap-2 ml-2">
+                              {task.status === 'completed' && (
+                                <div title="This petal has bloomed!">
+                                  <CheckCircle className="w-5 h-5 text-blossom-green-text" />
+                                </div>
+                              )}
+
                               {/* If pending, allow edit and delete */}
                               {task.status === 'pending' && (
                                 <>
@@ -416,7 +449,11 @@ const DashboardPage = () => {
 
                           {/* Display description if exists */}
                           {task.description && (
-                            <p className="text-blossom-pink text-sm mt-1 line-clamp-2">
+                            <p
+                              className={`text-blossom-pink text-sm mt-1 line-clamp-2 ${
+                                task.status === 'completed' ? 'opacity-70' : ''
+                              }`}
+                            >
                               {task.description}
                             </p>
                           )}
@@ -435,7 +472,13 @@ const DashboardPage = () => {
 
                             {/* Category */}
                             {task.category && (
-                              <span className="inline-flex items-center gap-1 text-sm text-blossom-pink">
+                              <span
+                                className={`inline-flex items-center gap-1 text-sm text-blossom-pink ${
+                                  task.status === 'completed'
+                                    ? 'opacity-70'
+                                    : ''
+                                }`}
+                              >
                                 <Tag className="w-3 h-3" />
                                 {task.category.name}
                               </span>
@@ -444,9 +487,11 @@ const DashboardPage = () => {
                             {/* Due Date */}
                             {task.dueDate && (
                               <span
-                                className={
-                                  'inline-flex items-center gap-1 text-sm text-blossom-pink'
-                                }
+                                className={`inline-flex items-center gap-1 text-sm text-blossom-pink ${
+                                  task.status === 'completed'
+                                    ? 'opacity-70'
+                                    : ''
+                                }`}
                               >
                                 <Calendar className="w-3 h-3" />
                                 {new Date(task.dueDate).toLocaleDateString(
@@ -456,10 +501,14 @@ const DashboardPage = () => {
                               </span>
                             )}
 
-                            {/* If overdue, warning */}
-                            <div className="flex items-center">
-                              {statusIcons[displayStatus]}
-                            </div>
+                            {isTaskOverdue && (
+                              <div
+                                className="flex items-center ml-1"
+                                title="This petal is overdue!"
+                              >
+                                <AlertCircle className="w-5 h-5 text-blossom-red-text animate-pulse-slow" />
+                              </div>
+                            )}
 
                             {/* Tags Display */}
                             {task.tags && task.tags.length > 0 && (
@@ -467,7 +516,11 @@ const DashboardPage = () => {
                                 {task.tags.map((tag, index) => (
                                   <span
                                     key={index}
-                                    className="px-2 py-0.5 bg-blossom-bg text-blossom-pink text-xs rounded-full"
+                                    className={`px-2 py-0.5 bg-blossom-bg text-blossom-pink text-xs rounded-full ${
+                                      task.status === 'completed'
+                                        ? 'opacity-70'
+                                        : ''
+                                    }`}
                                   >
                                     {tag}
                                   </span>
@@ -476,6 +529,58 @@ const DashboardPage = () => {
                             )}
                           </div>
                         </div>
+
+                        {/* Subtasks Display */}
+                        {task.subtasks && task.subtasks.length > 0 && (
+                          <div
+                            className={`mt-4 space-y-2 bg-blossom-bg/20 p-3 rounded-blossom border border-blossom-bg transition-opacity duration-300 ${
+                              task.status === 'completed'
+                                ? 'opacity-50 grayscale-[20%]'
+                                : 'opacity-100'
+                            }`}
+                          >
+                            <div className="text-s uppercase text-blossom-pink font-bold mb-2">
+                              Petal Progress
+                            </div>
+                            <div className="space-y-2">
+                              {task.subtasks.map((subtask, index) => (
+                                <div
+                                  key={subtask.id || index}
+                                  className="flex items-center gap-3"
+                                >
+                                  <button
+                                    // Disable interaction if the main task is done
+                                    disabled={task.status === 'completed'}
+                                    onClick={() =>
+                                      handleToggleSubtask(task, index)
+                                    }
+                                    className={`flex-shrink-0 w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                                      subtask.completed ||
+                                      task.status === 'completed'
+                                        ? 'bg-blossom-green-text border-blossom-green-text'
+                                        : 'border-blossom-pink hover:border-blossom-dark'
+                                    }`}
+                                  >
+                                    {(subtask.completed ||
+                                      task.status === 'completed') && (
+                                      <Check className="w-2.5 h-2.5 text-white" />
+                                    )}
+                                  </button>
+                                  <span
+                                    className={`text-s transition-colors ${
+                                      subtask.completed ||
+                                      task.status === 'completed'
+                                        ? 'line-through text-blossom-pink/60'
+                                        : 'text-blossom-dark'
+                                    }`}
+                                  >
+                                    {subtask.title}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

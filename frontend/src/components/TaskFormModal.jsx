@@ -15,9 +15,11 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
     dueDate: '',
     categoryId: '',
     tags: [],
+    subtasks: [],
   })
 
   const [newTag, setNewTag] = useState('')
+  const [newSubtask, setNewSubtask] = useState('')
 
   // Load categories when modal opens
   useEffect(() => {
@@ -38,6 +40,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
           dueDate: formattedDueDate,
           categoryId: editingTask.categoryId || '',
           tags: editingTask.tags || [],
+          subtasks: editingTask.subtasks || [],
         })
       } else {
         // Reset form for new task
@@ -48,6 +51,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
           dueDate: '',
           categoryId: '',
           tags: [],
+          subtasks: [],
         })
       }
     }
@@ -99,6 +103,38 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
     })
   }
 
+  const handleAddSubtask = () => {
+    if (newSubtask.trim()) {
+      setFormData({
+        ...formData,
+        subtasks: [
+          ...formData.subtasks,
+          { title: newSubtask.trim(), completed: false },
+        ],
+      })
+      setNewSubtask('')
+    }
+  }
+
+  const handleRemoveSubtask = (index) => {
+    setFormData({
+      ...formData,
+      subtasks: formData.subtasks.filter((_, i) => i !== index),
+    })
+  }
+
+  const handleToggleSubtask = (index) => {
+    const updatedSubtasks = [...formData.subtasks]
+    updatedSubtasks[index] = {
+      ...updatedSubtasks[index],
+      completed: !updatedSubtasks[index].completed,
+    }
+    setFormData({
+      ...formData,
+      subtasks: updatedSubtasks,
+    })
+  }
+
   if (!isOpen) return null
 
   return (
@@ -115,7 +151,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
               )}
             </div>
             <h2 className="text-xl font-heading text-blossom-dark">
-              {editingTask ? 'Edit Petal' : 'Plant a New Petal'}
+              {editingTask ? 'Edit Flower' : 'Plant a New Flower'}
             </h2>
           </div>
           <button
@@ -132,7 +168,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
             {/* Task Title */}
             <div>
               <label className="block text-sm font-medium text-blossom-dark mb-2">
-                Petal Title *
+                Flower Title*
               </label>
               <input
                 type="text"
@@ -157,7 +193,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
                   setFormData({ ...formData, description: e.target.value })
                 }
                 className="input-blossom text-blossom-dark resize-none min-h-[100px]"
-                placeholder="Add details about this petal..."
+                placeholder="Add details about this flower..."
               />
             </div>
 
@@ -265,10 +301,75 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
                     />
                   </div>
                   <p className="text-xs text-blossom-pink/70">
-                    Press Enter to add tags for better
-                    organization
+                    Press Enter to add tags for better organization
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Subtasks */}
+            <div>
+              <label className="block text-sm font-medium text-blossom-dark mb-2">
+                Subtasks
+              </label>
+              <div className="space-y-3">
+                {/* Existing Subtasks */}
+                {formData.subtasks.map((subtask, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSubtask(index)}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        subtask.completed
+                          ? 'bg-blossom-green-text border-blossom-green-text'
+                          : 'border-blossom-pink hover:border-blossom-dark'
+                      }`}
+                    >
+                      {subtask.completed && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </button>
+                    <span
+                      className={`flex-1 ${subtask.completed ? 'line-through text-blossom-pink' : 'text-blossom-dark'}`}
+                    >
+                      {subtask.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSubtask(index)}
+                      className="text-blossom-pink hover:text-blossom-red-text"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add New Subtask */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newSubtask}
+                    onChange={(e) => setNewSubtask(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAddSubtask()
+                      }
+                    }}
+                    className="input-blossom text-blossom-dark flex-1"
+                    placeholder="Add a subtask..."
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSubtask}
+                    className="btn-blossom-outline whitespace-nowrap"
+                  >
+                    Add Subtask
+                  </button>
+                </div>
+                <p className="text-xs text-blossom-pink/70">
+                  Break down complex flowers into smaller petals
+                </p>
               </div>
             </div>
 
@@ -307,7 +408,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
         <div className="px-6 pb-6 border-t border-blossom-bg bg-blossom-bg/30">
           <div className="flex items-center gap-2 text-sm text-blossom-pink">
             <span className="w-2 h-2 bg-blossom-pink rounded-full"></span>
-            <p>Each petal makes your garden more beautiful!</p>
+            <p>Each flower makes your garden more beautiful!</p>
           </div>
         </div>
       </div>
