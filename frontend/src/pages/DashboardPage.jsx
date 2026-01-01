@@ -67,33 +67,6 @@ const DashboardPage = () => {
     }
   }
 
-  // Check if task is overdue
-  const checkIsOverdue = (task) => {
-    if (!task.dueDate || task.status === 'completed') return false
-    const [year, month, day] = task.dueDate.split('T')[0].split('-').map(Number)
-    const dueDate = new Date(year, month - 1, day)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return dueDate < today
-  }
-
-  // Toggle task completion
-  const handleToggleTask = async (taskId, currentStatus) => {
-    try {
-      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
-      await taskService.updateTask(taskId, { status: newStatus })
-
-      // Update local state
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, status: newStatus } : task
-        )
-      )
-    } catch (error) {
-      console.error('Failed to toggle task:', error)
-    }
-  }
-
   // Handle task creation
   const handleCreateTask = async (e) => {
     e.preventDefault()
@@ -173,6 +146,33 @@ const DashboardPage = () => {
     }
   }
 
+  // Check if task is overdue
+  const checkIsOverdue = (task) => {
+    if (!task.dueDate || task.status === 'completed') return false
+    const [year, month, day] = task.dueDate.split('T')[0].split('-').map(Number)
+    const dueDate = new Date(year, month - 1, day)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return dueDate < today
+  }
+
+  // Toggle task completion
+  const handleToggleTask = async (taskId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
+      await taskService.updateTask(taskId, { status: newStatus })
+
+      // Update local state
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      )
+    } catch (error) {
+      console.error('Failed to toggle task:', error)
+    }
+  }
+
   // Filter tasks based on current filteres
   const filteredTasks = tasks.filter((task) => {
     const isActuallyOverdue = checkIsOverdue(task)
@@ -205,24 +205,108 @@ const DashboardPage = () => {
     total: tasks.length,
     completed: tasks.filter((t) => t.status === 'completed').length,
     pending: tasks.filter((t) => t.status === 'pending').length,
-    overdue: tasks.filter((t) => {
-      if (!t.dueDate || t.status === 'completed') return false
-      return new Date(t.dueDate) < new Date()
-    }).length,
-    highPriority: tasks.filter((t) => t.priority === 'high').length,
-    mediumPriority: tasks.filter((t) => t.priority === 'medium').length,
-    lowPriority: tasks.filter((t) => t.priority === 'low').length,
+    // Fix: Using the same logic as your date helper for consistency
+    overdue: tasks.filter((t) => checkIsOverdue(t)).length,
+
+    // High Priority
+    highTotal: tasks.filter((t) => t.priority === 'high').length,
+    highDone: tasks.filter(
+      (t) => t.priority === 'high' && t.status === 'completed'
+    ).length,
+
+    // Medium Priority
+    mediumTotal: tasks.filter((t) => t.priority === 'medium').length,
+    mediumDone: tasks.filter(
+      (t) => t.priority === 'medium' && t.status === 'completed'
+    ).length,
+
+    // Low Priority
+    lowTotal: tasks.filter((t) => t.priority === 'low').length,
+    lowDone: tasks.filter(
+      (t) => t.priority === 'low' && t.status === 'completed'
+    ).length,
   }
 
+  // Check if given date is today
+  const isToday = (dateStr) => {
+    if (!dateStr) return false
+    const today = new Date()
+    const checkDate = new Date(dateStr)
+
+    return (
+      checkDate.getUTCDate() === today.getDate() &&
+      checkDate.getUTCMonth() === today.getMonth() &&
+      checkDate.getUTCFullYear() === today.getFullYear()
+    )
+  }
+
+  // Check if given date is this week
+  const isThisWeek = (dateStr) => {
+    if (!dateStr) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Get the start of the current week (Sunday)
+    const startOfWeek = new Date(today)
+    startOfWeek.setDate(today.getDate() - today.getDay())
+
+    // Get the end of the current week (Saturday)
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+    endOfWeek.setHours(23, 59, 59, 999)
+
+    const checkDate = new Date(dateStr)
+
+    // Use UTC methods to compare the database string correctly
+    const checkTime = Date.UTC(
+      checkDate.getUTCFullYear(),
+      checkDate.getUTCMonth(),
+      checkDate.getUTCDate()
+    )
+
+    return (
+      checkTime >= startOfWeek.getTime() && checkTime <= endOfWeek.getTime()
+    )
+  }
+
+  const calculateDateBasedStats = (tasks) => {
+    // Use the raw strings so our UTC-aware helpers can handle them
+    const tasksDueToday = tasks.filter((task) => isToday(task.dueDate))
+    const tasksDueThisWeek = tasks.filter((task) => isThisWeek(task.dueDate))
+
+    const completedTodayCount = tasks.filter((task) => {
+      if (task.status !== 'completed') return false
+      // Completed date is a full timestamp, so local comparison is fine here
+      const completedDate = new Date(task.updatedAt || task.createdAt)
+      const today = new Date()
+      return (
+        completedDate.getDate() === today.getDate() &&
+        completedDate.getMonth() === today.getMonth() &&
+        completedDate.getFullYear() === today.getFullYear()
+      )
+    }).length
+
+    return {
+      todayTotal: tasksDueToday.length,
+      todayDone: tasksDueToday.filter((t) => t.status === 'completed').length,
+      weekTotal: tasksDueThisWeek.length,
+      weekDone: tasksDueThisWeek.filter((t) => t.status === 'completed').length,
+      completedToday: completedTodayCount,
+    }
+  }
+
+  const dateStats = calculateDateBasedStats(tasks)
+
+  // Priority Colors
   const priorityColors = {
     high: 'bg-blossom-red-bg text-blossom-red-text',
     medium: 'bg-blossom-yellow-bg text-blossom-yellow-text',
     low: 'bg-blossom-green-bg text-blossom-green-text',
   }
 
+  // Completion Status Icons
   const statusIcons = {
     completed: <CheckCircle className="w-5 h-5 text-blossom-green-text" />,
-    pending: <Clock className="w-5 h-5 text-blossom-yellow-text" />,
     overdue: <AlertCircle className="w-5 h-5 text-blossom-red-text" />,
   }
 
@@ -422,16 +506,13 @@ const DashboardPage = () => {
 
           {/* Filters */}
           <div className="card-blossom mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex-1 flex-col sm:flex-row sm:items-center justify-between gap-2">
               {/* Title */}
               <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-blossom-dark" />
                 <span className="text-blossom-dark font-medium">
-                  Filter Flowers
+                  Filter
                 </span>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
+                
                 {/* Status Filter */}
                 <select
                   value={filters.status}
@@ -481,7 +562,6 @@ const DashboardPage = () => {
 
           {/* Task List */}
           <div className="space-y-4 mb-8">
-
             {/* If no tasks */}
             {filteredTasks.length === 0 ? (
               <div className="card-blossom text-center py-12">
@@ -531,11 +611,6 @@ const DashboardPage = () => {
 
                             {/* Overdue & Actions */}
                             <div className="flex items-center gap-2 ml-2">
-                              {/* If overdue, warning */}
-                              <div className="flex items-center gap-1">
-                                {statusIcons[displayStatus]}
-                              </div>
-
                               {/* If pending, allow edit and delete */}
                               {task.status === 'pending' && (
                                 <>
@@ -599,6 +674,11 @@ const DashboardPage = () => {
                                 )}
                               </span>
                             )}
+
+                            {/* If overdue, warning */}
+                            <div className="flex items-center">
+                              {statusIcons[displayStatus]}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -612,7 +692,6 @@ const DashboardPage = () => {
 
         {/* Right 1/3 */}
         <div className="space-y-6">
-          
           {/* Blossom Tip */}
           <div className="card-blossom">
             <div className="flex items-center gap-2 mb-2">
@@ -632,63 +711,192 @@ const DashboardPage = () => {
 
           {/* Garden Health */}
           <div className="card-blossom">
-            <div className="flex items-center gap-2 mb-2">
+            {/* Title */}
+            <div className="flex items-center gap-2 mb-4">
               <HeartPlus className="w-6 h-6 text-blossom-dark" />
               <h3 className="font-heading text-lg text-blossom-dark">
                 Garden Health
               </h3>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-blossom-pink">Today's Progress</span>
-                <span className="font-medium text-blossom-dark">
-                  3/5 petals
-                </span>
+
+            {/* Progress Bars */}
+            <div className="space-y-4">
+              {/* Due Today Progress Bar */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-blossom-pink">Due Today</span>
+                  <span className="text-sm font-medium text-blossom-dark">
+                    {dateStats.todayDone}/{dateStats.todayTotal}{' '}
+                    {dateStats.todayTotal === 1 ? 'flower' : 'flowers'}
+                  </span>
+                </div>
+                <div className="h-2 bg-blossom-pink/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blossom-pink transition-all duration-500 ease-out"
+                    style={{
+                      width: `${dateStats.todayTotal > 0 ? (dateStats.todayDone / dateStats.todayTotal) * 100 : 0}%`,
+                    }}
+                  ></div>
+                </div>
               </div>
-              <div className="h-2 bg-blossom-pink/30 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blossom-pink transition-all duration-500 ease-out"
-                  style={{ width: '90%' }}
-                ></div>
+
+              {/* Due This Week Progress Bar */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-blossom-pink">
+                    Due This Week
+                  </span>
+                  <span className="text-sm font-medium text-blossom-dark">
+                    {dateStats.weekDone}/{dateStats.weekTotal}{' '}
+                    {dateStats.weekTotal === 1 ? 'flower' : 'flowers'}
+                  </span>
+                </div>
+                <div className="h-2 bg-blossom-pink/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blossom-yellow-text transition-all duration-500 ease-out"
+                    style={{
+                      width: `${dateStats.weekTotal > 0 ? (dateStats.weekDone / dateStats.weekTotal) * 100 : 0}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Completed Today Counter */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-blossom-pink">
+                    Completed Today
+                  </span>
+                  <span className="text-sm font-medium text-blossom-dark">
+                    {dateStats.completedToday}{' '}
+                    {dateStats.completedToday === 1 ? 'bloom' : 'blooms'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Quick Stats */}
+          {/* Statistics */}
           <div className="card-blossom">
-            <div className="flex items-center gap-2 mb-2">
+            {/* Title */}
+            <div className="flex items-center gap-2 mb-4">
               <ChartColumn className="w-6 h-6 text-blossom-dark" />
               <h3 className="font-heading text-lg text-blossom-dark">
-                Quick Stats
+                Statistics
               </h3>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blossom-red-bg rounded-full flex items-center justify-center">
-                    <Star className="w-4 h-4 text-blossom-red-text" />
+
+            <div className="space-y-6">
+              {/* Priority Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-blossom-pink">
+                  Priority Progress
+                </h4>
+
+                {/* High Priority */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-blossom-dark">
+                      High Priority
+                    </span>
+                    <span className="text-xs font-medium text-blossom-red-text">
+                      {stats.highDone}/{stats.highTotal}
+                    </span>
                   </div>
-                  <span className="text-blossom-pink">High Priority</span>
+                  <div className="h-2 bg-blossom-red-bg rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blossom-red-text transition-all duration-500"
+                      style={{
+                        width: `${stats.highTotal > 0 ? (stats.highDone / stats.highTotal) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <span className="font-bold text-blossom-dark">2</span>
+
+                {/* Medium Priority */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-blossom-dark">
+                      Medium Priority
+                    </span>
+                    <span className="text-xs font-medium text-blossom-yellow-text">
+                      {stats.mediumDone}/{stats.mediumTotal}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-blossom-yellow-bg rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blossom-yellow-text transition-all duration-500"
+                      style={{
+                        width: `${stats.mediumTotal > 0 ? (stats.mediumDone / stats.mediumTotal) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Low Priority */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-blossom-dark">
+                      Low Priority
+                    </span>
+                    <span className="text-xs font-medium text-blossom-green-text">
+                      {stats.lowDone}/{stats.lowTotal}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-blossom-green-bg rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blossom-green-text transition-all duration-500"
+                      style={{
+                        width: `${stats.lowTotal > 0 ? (stats.lowDone / stats.lowTotal) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blossom-yellow-bg rounded-full flex items-center justify-center">
-                    <Leaf className="w-4 h-4 text-blossom-yellow-text" />
-                  </div>
-                  <span className="text-blossom-pink">Due This Week</span>
-                </div>
-                <span className="font-bold text-blossom-dark">4</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blossom-green-bg rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-blossom-green-text" />
-                  </div>
-                  <span className="text-blossom-pink">Completed Today</span>
-                </div>
-                <span className="font-bold text-blossom-dark">1</span>
+
+              <hr className="border-blossom-pink/10" />
+
+              {/* Category Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-blossom-pink">
+                  Category Progress
+                </h4>
+                {categories.length === 0 ? (
+                  <p className="text-xs text-blossom-pink italic">
+                    No categories yet
+                  </p>
+                ) : (
+                  categories.map((cat) => {
+                    const catTasks = tasks.filter(
+                      (t) => t.categoryId === cat.id
+                    )
+                    const catTotal = catTasks.length
+                    const catDone = catTasks.filter(
+                      (t) => t.status === 'completed'
+                    ).length
+
+                    if (catTotal === 0) return null // Only show categories that have tasks
+
+                    return (
+                      <div key={cat.id}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-blossom-dark">
+                            {cat.icon} {cat.name}
+                          </span>
+                          <span className="text-xs font-medium text-blossom-pink">
+                            {catDone}/{catTotal}
+                          </span>
+                        </div>
+                        <div className="h-2 bg-blossom-pink/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blossom-pink transition-all duration-500"
+                            style={{ width: `${(catDone / catTotal) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </div>
           </div>
