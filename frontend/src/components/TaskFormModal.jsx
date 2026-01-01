@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Calendar, Tag as TagIcon, Star, Check, Plus } from 'lucide-react'
+import { X, Calendar, Tag, Tags, Star, Check, Plus, Pencil } from 'lucide-react'
 import { taskService } from '../services/taskService'
 import { categoryService } from '../services/categoryService'
 
@@ -105,13 +105,13 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-blossom shadow-blossom max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-blossom-bg">
+        <div className="flex items-center justify-between px-6 pt-6 border-b border-blossom-bg">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blossom-pink/10 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 flex items-center justify-center">
               {editingTask ? (
-                <span className="text-blossom-pink">✏️</span>
+                <Pencil className="w-6 h-6 text-blossom-dark" />
               ) : (
-                <Plus className="w-4 h-4 text-blossom-pink" />
+                <Plus className="w-6 h-6 text-blossom-dark" />
               )}
             </div>
             <h2 className="text-xl font-heading text-blossom-dark">
@@ -161,7 +161,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
               />
             </div>
 
-            {/* Priority, Due Date, and Category Row */}
+            {/* Priority, Due Date, Category, Tag */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Priority */}
               <div>
@@ -201,7 +201,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-blossom-dark mb-2">
-                  <TagIcon className="w-4 h-4 inline mr-1" />
+                  <Tag className="w-4 h-4 inline mr-1" />
                   Category
                 </label>
                 <select
@@ -223,6 +223,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
               {/* Tags Input */}
               <div>
                 <label className="block text-sm font-medium text-blossom-dark mb-2">
+                  <Tags className="w-4 h-4 inline mr-1" />
                   Tags
                 </label>
                 <div className="space-y-2">
@@ -272,7 +273,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
             </div>
 
             {/* Form Actions */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3">
               <button
                 type="submit"
                 disabled={loading}
@@ -286,7 +287,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
                 ) : (
                   <>
                     <Check className="w-5 h-5" />
-                    {editingTask ? 'Update Petal' : 'Plant Petal'}
+                    {editingTask ? 'Update Flower' : 'Plant Flower'}
                   </>
                 )}
               </button>
@@ -303,7 +304,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
         </div>
 
         {/* Footer Hint */}
-        <div className="p-6 border-t border-blossom-bg bg-blossom-bg/30">
+        <div className="px-6 pb-6 border-t border-blossom-bg bg-blossom-bg/30">
           <div className="flex items-center gap-2 text-sm text-blossom-pink">
             <span className="w-2 h-2 bg-blossom-pink rounded-full"></span>
             <p>Each petal makes your garden more beautiful!</p>
