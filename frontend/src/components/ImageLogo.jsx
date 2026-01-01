@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom'
 
-// First, let's check if the file exists in our assets
 let LogoImage = null
 
 try {
-  // This is how Vite handles static asset imports
   LogoImage = new URL('../assets/images/logo.png', import.meta.url).href
 } catch (error) {
   console.log('Logo image not found, using fallback emoji:', error.message)

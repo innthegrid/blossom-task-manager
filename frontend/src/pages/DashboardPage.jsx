@@ -61,7 +61,6 @@ const DashboardPage = () => {
     }
   }
 
-  // Replace handleDeleteTask function:
   const handleDeleteTask = (taskId) => {
     setConfirmDelete(taskId)
   }
@@ -117,20 +116,15 @@ const DashboardPage = () => {
   // Toggle subtask completion
   const handleToggleSubtask = async (task, subtaskIndex) => {
     try {
-      // 1. Create a deep copy of the subtasks array
       const updatedSubtasks = [...task.subtasks]
 
-      // 2. Flip the status of the specific subtask
       updatedSubtasks[subtaskIndex] = {
         ...updatedSubtasks[subtaskIndex],
         completed: !updatedSubtasks[subtaskIndex].completed,
       }
 
-      // 3. Update the task on the server (using existing updateTask endpoint)
-      // We send the full subtasks array because the backend replaces the old list
       await taskService.updateTask(task.id, { subtasks: updatedSubtasks })
 
-      // 4. Update local state for immediate feedback
       setTasks(
         tasks.map((t) =>
           t.id === task.id ? { ...t, subtasks: updatedSubtasks } : t
@@ -147,8 +141,6 @@ const DashboardPage = () => {
     if (task.status === 'archived') return false
 
     const isActuallyOverdue = checkIsOverdue(task)
-
-    // Rest of your existing filter logic...
     // Status Filter Logic
     if (filters.status !== 'all') {
       if (filters.status === 'overdue') {
@@ -276,7 +268,6 @@ const DashboardPage = () => {
 
   const dateStats = calculateDateBasedStats(tasks)
 
-  // Replace handleArchiveCompleted function:
   const handleArchiveCompleted = () => {
     if (stats.completed === 0) {
       setNotification({
@@ -295,7 +286,7 @@ const DashboardPage = () => {
         message: result.message,
         type: 'success',
       })
-      fetchData() // Refresh the task list
+      fetchData()
     } catch (error) {
       console.error('Failed to archive tasks:', error)
       setNotification({
@@ -307,7 +298,6 @@ const DashboardPage = () => {
     }
   }
 
-  // Add this helper function for custom confirmation:
   const customConfirm = (message, title = 'Confirm') => {
     return new Promise((resolve) => {
       const modal = document.createElement('div')

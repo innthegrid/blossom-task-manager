@@ -7,7 +7,7 @@ const Notification = ({ message, type = 'info', onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(() => onClose(), 300); // Allow fade-out animation
+      setTimeout(() => onClose(), 300);
     }, 3000);
 
     return () => clearTimeout(timer);

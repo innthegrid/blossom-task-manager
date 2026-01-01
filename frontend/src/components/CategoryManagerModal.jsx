@@ -5,28 +5,6 @@ import {
   Tag,
   Edit2,
   Trash2,
-  Check,
-  // Import the icons you want to use as presets
-  Sprout,
-  Book,
-  Briefcase,
-  Home,
-  ShoppingCart,
-  Dumbbell,
-  Palette,
-  Music,
-  Plane,
-  GraduationCap,
-  Laptop,
-  Phone,
-  Coffee,
-  Utensils,
-  Heart,
-  PawPrint,
-  Target,
-  Calendar,
-  Star,
-  Leaf,
 } from 'lucide-react'
 import { categoryService } from '../services/categoryService'
 import CategoryIcon, { ICON_MAP } from '../components/CategoryIcon'
@@ -54,7 +32,7 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
   const [editingCategory, setEditingCategory] = useState(null)
   const [newCategory, setNewCategory] = useState({
     name: '',
-    icon: 'Sprout', // Store the string key
+    icon: 'Sprout',
     color: '#ff8fa5ff',
   })
 

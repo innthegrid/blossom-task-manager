@@ -7,7 +7,7 @@ const SALT_ROUNDS = 10;
 /**
  * Hash a password
  * @param {string} password - Plain text password
- * @returns {Promise<string>} Hashed password
+ * @returns {Promise<string>} - Hashed password
  */
 const hashPassword = async (password) => {
     if (!password || password.length < 6) {
