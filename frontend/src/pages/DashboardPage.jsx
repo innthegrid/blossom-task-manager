@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { taskService } from '../services/taskService'
 import { categoryService } from '../services/categoryService'
+import CategoryManagerModal from '../components/CategoryManagerModal'
 
 const DashboardPage = () => {
   // States
@@ -35,8 +36,6 @@ const DashboardPage = () => {
     priority: 'all',
     category: 'all',
   })
-
-  // New Task Form - State
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -45,6 +44,7 @@ const DashboardPage = () => {
     categoryId: '',
     tags: [],
   })
+  const [showCategoryManager, setShowCategoryManager] = useState(false)
 
   // Fetch data on component mount
   useEffect(() => {
@@ -325,22 +325,32 @@ const DashboardPage = () => {
         <div className="lg:col-span-2">
           {/* Header with Quick Add */}
           <div className="mb-4">
+            {/* Add this near your "Add New Flower" button */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-heading text-blossom-dark">
                   Your Blossom Garden
                 </h1>
                 <p className="text-blossom-pink mt-1">
-                  {stats.total} petal growing • {stats.completed} bloomed
+                  {stats.total} petals growing • {stats.completed} bloomed
                 </p>
               </div>
-              <button
-                onClick={() => setShowTaskForm(true)}
-                className="btn-blossom flex items-center gap-2 self-start sm:self-auto"
-              >
-                <Plus className="w-5 h-5" />
-                Add New Flower
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowTaskForm(true)}
+                  className="btn-blossom flex items-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Add
+                </button>
+                <button
+                  onClick={() => setShowCategoryManager(true)}
+                  className="btn-blossom-outline flex items-center gap-2"
+                >
+                  <Tag className="w-5 h-5" />
+                  Categories
+                </button>
+              </div>
             </div>
           </div>
 
@@ -412,7 +422,7 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Priority, Due Date, and Category Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Task Priority (Low/Medium/High) */}
                   <div>
                     <label className="block text-sm font-medium text-blossom-dark mb-1">
@@ -466,6 +476,57 @@ const DashboardPage = () => {
                       ))}
                     </select>
                   </div>
+
+                  {/* Tags Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-blossom-dark mb-2">
+                      Tags (press Enter to add)
+                    </label>
+                    <div className="input-blossom min-h-[44px] flex flex-wrap items-center gap-1 py-1">
+                      {newTask.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blossom-bg text-blossom-pink text-xs rounded-full"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewTask({
+                                ...newTask,
+                                tags: newTask.tags.filter(
+                                  (_, i) => i !== index
+                                ),
+                              })
+                            }}
+                            className="text-blossom-pink hover:text-blossom-dark"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                      <input
+                        type="text"
+                        placeholder="Add a tag..."
+                        className="flex-1 min-w-[120px] border-0 bg-transparent focus:outline-none text-blossom-dark placeholder:text-blossom-pink/50"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.target.value.trim()) {
+                            e.preventDefault()
+                            if (!newTask.tags.includes(e.target.value.trim())) {
+                              setNewTask({
+                                ...newTask,
+                                tags: [...newTask.tags, e.target.value.trim()],
+                              })
+                            }
+                            e.target.value = ''
+                          }
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-blossom-pink/70 mt-1">
+                      Press Enter to add tags for better organization
+                    </p>
+                  </div>
                 </div>
                 {/* End Form Data */}
 
@@ -509,10 +570,8 @@ const DashboardPage = () => {
             <div className="flex-1 flex-col sm:flex-row sm:items-center justify-between gap-2">
               {/* Title */}
               <div className="flex items-center gap-2">
-                <span className="text-blossom-dark font-medium">
-                  Filter
-                </span>
-                
+                <span className="text-blossom-dark font-medium">Filter</span>
+
                 {/* Status Filter */}
                 <select
                   value={filters.status}
@@ -679,6 +738,20 @@ const DashboardPage = () => {
                             <div className="flex items-center">
                               {statusIcons[displayStatus]}
                             </div>
+
+                            {/* Tags Display */}
+                            {task.tags && task.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {task.tags.map((tag, index) => (
+                                  <span
+                                    key={index}
+                                    className="px-2 py-0.5 bg-blossom-bg text-blossom-pink text-xs rounded-full"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -902,6 +975,12 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
+      {/* Category Manager Modal */}
+      <CategoryManagerModal
+        isOpen={showCategoryManager}
+        onClose={() => setShowCategoryManager(false)}
+        onCategoryCreated={fetchData}
+      />
     </div>
   )
 }
