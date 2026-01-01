@@ -1,108 +1,188 @@
-# 🌸 Blossom - Cherry Blossom Task Manager
+# 🌸 Blossom - Task Manager
 
-**Blossom** is a cherry blossom-themed personal task manager where each task is a petal in your productivity garden. Grow your goals, one petal at a time.
+**Blossom** is a cherry blossom-themed personal task manager where each task is a petal in your productivity garden.
+
+This is a full-stack web application developed as a learning project to demonstrate modern web development skills. It showcases complete CRUD operations, user authentication, responsive design, and data visualization — all wrapped in a beautiful, themed interface.
 
 ## 🌱 Features
-### **Authentication & Security**
-- **User Registration** - Secure account creation with email validation
-- **Login/Logout** - JWT-based authentication with refresh tokens
-- **Password Security** - BCrypt hashing with strength validation
-- **Protected Routes** - Tasks are private to each user
+### **Core Task Management**
+- **Complete CRUD Operations**: Create, read, update, and delete tasks with real-time updates
+- **Smart Task Organizaton**: Priority levels (low/medium/high), status tracking (on track/complete/overdue), and deadlines
+- **Subtasks Support**: Break complex tasks into manageable steps with individual completion tracking
+- **Categories & Tags**: Dual organizational system with preset icons and custom colors
+- **Advanced Filtering**: Filter by status, priority, and category
 
-### **Task Management**
-- **Full CRUD Operations** - Create, Read, Update, Delete tasks
-- **Task Organization** - Priority levels (low/medium/high), status tracking
-- **Due Dates** - Optional deadlines with date picker
-- **Search & Filter** - Find tasks by status, priority, or date
+### **User Authentication & Secury**
+- **JWT-Based Authenticaton**: Secure login with access/refresh token rotation
+- **Password Security**: BCrypt hashing with strength validation and security tips
+- **Protected Routes**: Role-based access control for all user data
+- **Session Management**: Persistent login with automatic token refresh
+
+### **Analytics & Visualization**
+- **Garden Health Dashboard**: Real-time progress tracking with visual indicators
+- **Priority Analysis**: Progress bars showing completion rates by priority level
+- **Category Insights**: Distribution and completion statistics across categories
+- **Time-Based Metrics**: Daily/weekly completion tracking with automatic resets
+- **Visual Statistics**: Clean, color-coded progress bars
 
 ### **User Experience**
-- **Cherry Blossom Theme** - Soothing pastel color palette
-- **Responsive Design** - Works on mobile, tablet, and desktop
-- **Beautiful UI** - Rounded corners, soft shadows, cute icons
-- **Real-time Updates** - Instant feedback on actions
-
-### **Insights & Analytics**
-- **Task Statistics** - Completion rates, priority distribution
-- **Progress Tracking** - Visual indicators of productivity
-- **User Profile** - Personalized dashboard with garden metaphore
+- **Responsive Design**: Fully functional on mobile, tablet, and desktop
+- **Modal-Based Interface**: Clean, focused forms using overlay modals
+- **Real-Time Updates**: Instant feedback on all actions without page refreshes
+- **Cherry Blossom Theme**: Consistent color palette throughout the application
 
 ## 🛠️ Technology Stack
+
 ### **Frontend**
-- **React** - UI framework
-- **Tailwind CSS** - Styling
-- **Lucide React** - Icons
-- **Axios** - API communication
-- **React Router** - Client-side routing
+| Technology | Purpose | Why I Chose It |
+|------------|---------|----------------|
+| **React 18** | UI Framework | Component-based architecture, excellent ecosystem |
+| **Tailwind CSS v4** | Styling | Utility-first, rapid development, CSS-in-JS alternative |
+| **Lucide React** | Icons | Consistent icon set, tree-shakeable, matches theme |
+| **Axios** | HTTP Client | Promise-based, interceptors for auth handling |
+| **React Router v6** | Navigation | Declarative routing with nested routes |
+| **Context API** | State Management | Built-in solution for global state needs |
 
 ### **Backend**
-- **Node.js** - Runtime environment
-- **Express** - Web framework
-- **PostgreSQL** - Database
-- **Prisma** - Database ORM
-- **JWT** - Authentication
-- **BCrypt** - Password hashing library
-- **Express Validator** - Input validation middleware
+| Technology | Purpose | Why I Chose It |
+|------------|---------|----------------|
+| **Node.js + Express** | Server Framework | Fast, unopinionated, excellent middleware ecosystem |
+| **PostgreSQL** | Database | ACID compliance, JSON support, reliable for production |
+| **Prisma ORM** | Database Client | Type-safe, migrations, intuitive query API |
+| **JWT** | Authentication | Stateless, scalable, widely adopted standard |
+| **BCrypt.js** | Password Hashing | Industry standard for password security |
+| **Express Validator** | Input Validation | Middleware-based validation with custom error messages |
 
-### **Tools**
-- **Git & GitHub** - Version control
-- **VSCode** - Development environment
-- **Postman/curl** - API testing
-- **Prisma Studio** - Database GUI
-- **Nodemon** - Automatic server restart
+### **Development & Deployment**
+- **Vite**: Lightning-fast build tool and dev server
+- **Git + GitHub**: Version control and collaboration
+- **Postman**: API testing and documentation
+- **Prisma Studio**: Database GUI for development
+- **Render/Vercel**: Planned deployment platforms
 
-## 📁 Project Structure
+## 📁 Project Architecture
+
 ```
 blossom-task-manager/
-├── backend/                    # Node.js + Express backend
+├── frontend/                 # React + Vite application
 │   ├── src/
-│   │   ├── config/            # Database configuration
-│   │   ├── controllers/       # Route controllers (business logic)
-│   │   ├── middleware/        # Authentication & validation
-│   │   ├── models/            # Data models & repositories
-│   │   ├── routes/            # API route definitions
-│   │   ├── scripts/           # Database seeding scripts
-│   │   └── utils/             # Helper functions (JWT, password)
-│   ├── prisma/                # Database schema & migrations
-│   ├── scripts/               # Development shell scripts
-│   ├── .env                   # Environment variables
-│   └── package.json
-├── frontend/                  # React frontend (to be implemented)
-└── README.md                  # You are here!
+│   │   ├── components/       # Reusable UI components
+│   │   │   ├── Layout.jsx    # Main layout with conditional Navbar
+│   │   │   ├── TaskFormModal.jsx    # Modal for task creation/editing
+│   │   │   ├── CategoryManagerModal.jsx  # Modal for category management
+│   │   │   └── CategoryIcon.jsx    # Dynamic icon component
+│   │   ├── pages/           # Page components
+│   │   │   ├── DashboardPage.jsx    # Main task dashboard
+│   │   │   ├── LoginPage.jsx        # Authentication page
+│   │   │   └── RegisterPage.jsx     # User registration
+│   │   ├── services/        # API service layers
+│   │   │   ├── taskService.js       # Task CRUD operations
+│   │   │   └── categoryService.js   # Category management
+│   │   ├── api/            # API configuration
+│   │   │   └── axiosConfig.js      # Axios instance with interceptors
+│   │   ├── utils/          # Helper functions
+│   │   └── assets/         # Images, fonts, static files
+│   ├── public/             # Static assets
+│   └── package.json        # Dependencies and scripts
+│
+├── backend/                # Node.js + Express API
+│   ├── src/
+│   │   ├── config/         # Configuration files
+│   │   │   └── database.js # Prisma client initialization
+│   │   ├── controllers/    # Request handlers
+│   │   │   ├── taskController.js    # Task business logic
+│   │   │   ├── authController.js    # Authentication logic
+│   │   │   └── categoryController.js # Category operations
+│   │   ├── middleware/     # Custom middleware
+│   │   │   └── auth.js     # JWT authentication
+│   │   ├── models/         # Data models (Prisma schema)
+│   │   ├── routes/         # API route definitions
+│   │   ├── utils/          # Helper functions
+│   │   │   ├── jwt.js      # Token generation/validation
+│   │   │   └── password.js # Password hashing/validation
+│   │   └── index.js        # Express server entry point
+│   ├── prisma/             # Database schema and migrations
+│   │   └── schema.prisma   # Prisma schema definition
+│   └── package.json        # Backend dependencies
+│
+└── README.md              # Project documentation
 ```
 
-## 🗂️ Database Schema
-```
-PostgreSQL Database (blossom_db)
-├── users                    # User accounts
-│   ├── id (primary key)
-│   ├── email (unique)
-│   ├── password (hashed)
-│   ├── username
-│   └── theme (cherry-blossom)
-│
-└── tasks                   # Task items
-    ├── id (primary key)
-    ├── title
-    ├── description
-    ├── status
-    ├── priority
-    ├── dueDate
-    ├── userId (foreign key → users.id)
-    ├── flowerEmoji (🌸)
-    └── isBlossom (true)
+## 🗄️ Database Schema
+
+```prisma
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  username  String?
+  tasks     Task[]
+  categories Category[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@map("users")
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("pending") // pending, completed
+  priority    String    @default("medium")  // low, medium, high
+  dueDate     DateTime?
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subtasks    Subtask[]
+  tags        String[]  // Array of tag strings
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("tasks")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   @default("#ffaabb")
+  icon      String   @default("Sprout") // Lucide icon name
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([name, userId])
+  @@map("categories")
+}
+
+model Subtask {
+  id        String    @id @default(cuid())
+  title     String
+  completed Boolean   @default(false)
+  taskId    String
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@map("subtasks")
+}
 ```
 
 ## 🚀 Getting Started
+
 ### **Prerequisites**
 - Node.js (v18 or higher)
 - PostgreSQL (v14 or higher)
 - Git
 
-### **Installation**
+### **Local Development Setup**
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR-USERNAME/blossom-task-manager.git
+   git clone https://github.com/your-username/blossom-task-manager.git
    cd blossom-task-manager
    ```
 
@@ -110,74 +190,82 @@ PostgreSQL Database (blossom_db)
    ```bash
    cd backend
    npm install
-   ```
-
-3. **Configure environment variables**
-   ```bash
    cp .env.example .env
-   # Edit .env with your database credentials
+   # Edit .env with your PostgreSQL credentials
    ```
 
-4. **Set up database**
+3. **Initialize the database**
    ```bash
-   # Create PostgreSQL database (one-time setup)
    createdb blossom_db
-   
-   # Run database migrations
    npx prisma migrate dev
-   
-   # Seed the database with sample data
-   npm run seed
+   npx prisma db seed
    ```
 
-5. **Start the development server**
+4. **Start the backend server**
    ```bash
    npm run dev
+   # Server runs on http://localhost:5001
    ```
 
-6. **Access the applications**
-   - **Backend API:** `http://localhost:5001`
-   - **API Documentation:** `http://localhost:5001/`
-   - **Prisma Studio (Database GUI):** `http://localhost:5555`
+5. **Set up the frontend**
+   ```bash
+   cd ../frontend
+   npm install
+   ```
 
-## 🔐 API Endpoints
+6. **Start the frontend development server**
+   ```bash
+   npm run dev
+   # App runs on http://localhost:5173
+   ```
 
-### **Authentication**
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/auth/register` | Register new user | No |
-| POST | `/api/auth/login` | Login existing user | No |
-| GET | `/api/auth/profile` | Get user profile | Yes |
-| POST | `/api/auth/refresh` | Refresh access token | No |
-| POST | `/api/auth/validate` | Validate JWT token | No |
+7. **Access the application**
+   - **Frontend**: http://localhost:5173
+   - **Backend API**: http://localhost:5001
+   - **API Documentation**: http://localhost:5001/
+   - **Prisma Studio**: http://localhost:5555
 
-### **Tasks**
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/tasks` | Get all tasks for user | Yes |
-| GET | `/api/tasks/stats` | Get task statistics | Yes |
-| GET | `/api/tasks/:id` | Get specific task | Yes |
-| POST | `/api/tasks` | Create new task | Yes |
-| PUT | `/api/tasks/:id` | Update task | Yes |
-| DELETE | `/api/tasks/:id` | Delete task | Yes |
+## 🎨 Design System
 
-### **Public**
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | API welcome message |
-| GET | `/api/health` | Health check |
-| GET | `/api/blossom` | Blossom theme info |
-| GET | `/api/auth/password-tips` | Password strength tips |
-
-## 🩷 Theme Colors
+### **Color Palette**
 | Color | Hex | Usage |
 |-------|-----|-------|
-| Primary Pink | `#FFB7C5` | Buttons, accents |
-| Soft Blossom | `#D4A5A5` | Secondary elements |
-| Bright Petal | `#FF9AA2` | Highlights, alerts |
-| Pale Background | `#FFF9FB` | Page background |
-| Mint Success | `#B5EAD7` | Completed tasks |
-| Peach Warning | `#FFDAC1` | Warnings, due dates |
+| Blossom Dark | `#e890a2` | Headers, primary text |
+| Blossom Pink | `#ffaabb` | Buttons, accents, subtext |
+| Blossom Green | `#7bd4b3` / `#cdfaea` | Success states, completed items |
+| Blossom Yellow | `#eba678` / `#fce3d2` | Warnings, medium priority |
+| Blossom Red | `#de7880` / `#ffd9dd` | Errors, high priority, overdue |
+| Blossom Blue | `#79cad1` | Informational elements |
+| Background | `#FFF9FB` | Page background |
+
+### **Typography**
+- **Headings**: Jua (400 weight only) - Playful, rounded
+- **Body**: Lexend (300-700 weights) - Clean, readable
+- **Hierarchy**: Clear visual hierarchy with consistent spacing
+
+### **Components**
+- **Buttons**: Two variants (filled and outlined) with consistent hover states
+- **Cards**: Soft shadows, rounded corners, subtle hover effects
+- **Inputs**: Clear focus states with theme-appropriate colors
+- **Progress Bars**: Color-coded by priority with smooth animations
+
+## 🎯 Learning Outcomes
+
+### **Technical Skills Gained**
+- **Full-Stack Development**: End-to-end application architecture
+- **Database Design**: PostgreSQL schema design and optimization
+- **API Design**: RESTful API patterns and best practices
+- **State Management**: Complex state patterns in React
+- **Authentication**: JWT implementation and security considerations
+- **Responsive Design**: Mobile-first CSS with Tailwind
+- **Deployment**: Environment configuration and deployment planning
+
+### **Soft Skills Developed**
+- **Project Planning**: Feature prioritization and roadmap creation
+- **Problem Solving**: Debugging complex full-stack issues
+- **Documentation**: Clear technical and user documentation
+- **Time Management**: Balancing feature development with learning
+- **Attention to Detail**: Consistent theming and UX polish
 
 ## 🤝 Contributing
 While this is a personal learning project, suggestions and feedback are welcome! Feel free to open an issue if you have ideas for improvement.
@@ -186,5 +274,4 @@ While this is a personal learning project, suggestions and feedback are welcome!
 This project is open source and available under the MIT License.
 
 ## 👩🏻‍💻 Author
-Ingrid Tsai - Learning full-stack development through building beautiful, functional applications.
-*Built with lots of 🩷 and 🧋*
+Ingrid Tsai
