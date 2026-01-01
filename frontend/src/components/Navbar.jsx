@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import {
   Home,
-  CheckSquare,
-  PlusCircle,
+  Archive,
   User,
   LogOut,
   Menu,
@@ -22,16 +21,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Dashboard', href: '/', icon: <Home className="w-5 h-5" /> },
-    {
-      name: 'Tasks',
-      href: '/tasks',
-      icon: <CheckSquare className="w-5 h-5" />,
-    },
-    {
-      name: 'New Task',
-      href: '/tasks/new',
-      icon: <PlusCircle className="w-5 h-5" />,
-    },
+    { name: 'Archive', href: '/archive', icon: <Archive className="w-5 h-5" /> },
   ]
 
   return (

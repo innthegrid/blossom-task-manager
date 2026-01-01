@@ -3,19 +3,10 @@ const router = express.Router();
 const taskController = require('../controllers/taskController');
 const { authenticate } = require('../middleware/auth');
 
-// Blossom-themed middleware for logging
-const blossomLogger = (req, res, next) => {
-    console.log(`🌸 ${new Date().toISOString()} - ${req.method} ${req.path}`);
-    next();
-};
-
 // Apply authentication to all task routes
 router.use(authenticate);
 
-// Apply blossom logger to all task routes
-router.use(blossomLogger);
-
-// Get all tasks (with optional user filter)
+// Get all tasks (with optional filters)
 router.get('/', taskController.getAllTasks);
 
 // Get task statistics
@@ -33,15 +24,7 @@ router.put('/:id', taskController.updateTask);
 // Delete a task
 router.delete('/:id', taskController.deleteTask);
 
-// Special blossom-themed endpoint
-router.get('/garden/blossoms', (req, res) => {
-    res.json({
-        message: 'Welcome to your cherry blossom garden!',
-        petals: ['Create', 'Read', 'Update', 'Delete'],
-        gardenSize: 'Growing every day!',
-        tip: 'Grow your goals, one petal at a time.',
-        database: 'PostgreSQL + Prisma'
-    });
-});
+// Toggle task completion
+router.patch('/:id/toggle', taskController.toggleTask);
 
 module.exports = router;

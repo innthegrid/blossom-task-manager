@@ -1,21 +1,20 @@
-const { TaskRepository } = require('../models/Task');
+const { prisma } = require('../config/database');
 
-// Helper function to respond with blossom-themed errors
-const blossomError = (res, message, status = 400) => {
+// Helper functions for consistent responses
+const blossomResponse = (res, data, message = 'Success', status = 200) => {
     res.status(status).json({
-        error: message,
-        suggestion: 'Try again with valid data, petal!',
-        status: 'error',
+        ...data,
+        message,
+        status: 'success',
         timestamp: new Date().toISOString()
     });
 };
 
-// Helper function for success responses
-const blossomSuccess = (res, data, message = 'Success!', status = 200) => {
+const blossomError = (res, message, status = 400) => {
     res.status(status).json({
-        data,
-        message,
-        status: 'success',
+        error: message,
+        suggestion: 'Please check your data and try again',
+        status: 'error',
         timestamp: new Date().toISOString()
     });
 };
@@ -24,29 +23,38 @@ const blossomSuccess = (res, data, message = 'Success!', status = 200) => {
 const getAllTasks = async (req, res) => {
     try {
         const userId = req.userId;
-        const { status, priority, includeUser } = req.query;
+        const { status, priority, categoryId } = req.query;
 
-        const tasks = await TaskRepository.findAll(userId, {
-            status,
-            priority,
-            includeUser: includeUser === 'true'
+        const where = { userId };
+
+        if (status && status !== 'all') where.status = status;
+        if (priority && priority !== 'all') where.priority = priority;
+        if (categoryId && categoryId !== 'all') where.categoryId = categoryId;
+
+        const tasks = await prisma.task.findMany({
+            where,
+            include: {
+                category: true
+            },
+            orderBy: { createdAt: 'desc' }
         });
 
-        // Get statistics for the response
-        const stats = await TaskRepository.getStats(userId);
+        // Get statistics
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.status === 'completed').length;
+        const pending = tasks.filter(t => t.status === 'pending').length;
+        const overdue = tasks.filter(t => {
+            if (!t.dueDate || t.status === 'completed') return false;
+            return new Date(t.dueDate) < new Date();
+        }).length;
 
-        blossomSuccess(res, {
+        blossomResponse(res, {
             tasks,
             meta: {
-                count: tasks.length,
-                userId,
-                ...stats
-            },
-            blossom: {
-                petals: tasks.length,
-                garden: 'blooming',
+                count: total,
+                stats: { total, completed, pending, overdue }
             }
-        }, `Found ${tasks.length} petals in your garden!`);
+        });
     } catch (error) {
         console.error('Error fetching tasks:', error);
         blossomError(res, 'Failed to fetch tasks', 500);
@@ -57,19 +65,16 @@ const getAllTasks = async (req, res) => {
 const getTaskById = async (req, res) => {
     try {
         const userId = req.userId;
-        const task = await TaskRepository.findById(req.params.id, userId);
+        const task = await prisma.task.findFirst({
+            where: { id: req.params.id, userId },
+            include: { category: true }
+        });
 
         if (!task) {
-            return blossomError(res, 'Task not found - petal has fallen!', 404);
+            return blossomError(res, 'Task not found', 404);
         }
 
-        blossomSuccess(res, {
-            task,
-            blossom: {
-                emoji: task.flowerEmoji || '🌸',
-                isBlossom: task.isBlossom
-            }
-        }, 'Petal found in your garden!');
+        blossomResponse(res, { task });
     } catch (error) {
         console.error('Error fetching task:', error);
         blossomError(res, 'Failed to fetch task', 500);
@@ -78,40 +83,71 @@ const getTaskById = async (req, res) => {
 
 // Create a new task
 const createTask = async (req, res) => {
-    try {
-        const { title, description, priority, dueDate, flowerEmoji } = req.body;
-        const userId = req.userId;
+  try {
+    const { title, description, priority, dueDate, categoryId, tags } = req.body;
+    const userId = req.userId;
 
-        const taskData = {
-            title,
-            description,
-            priority,
-            dueDate: dueDate ? new Date(dueDate) : null,
-            userId,
-            flowerEmoji
-        };
+    console.log('Received create request:', { title, userId, categoryId, dueDate }); // Debug
 
-        const task = await TaskRepository.create(taskData);
-
-        // Get updated statistics
-        const stats = await TaskRepository.getStats(userId);
-
-        blossomSuccess(res, {
-            task,
-            meta: {
-                totalPetals: stats.total,
-                newPetal: true
-            }
-        }, 'New petal added to your blossom!', 201);
-    } catch (error) {
-        console.error('Error creating task:', error);
-
-        if (error.message.startsWith('Validation failed')) {
-            blossomError(res, error.message, 400);
-        } else {
-            blossomError(res, 'Failed to create task', 500);
-        }
+    // Basic validation
+    if (!title || title.trim() === '') {
+      return blossomError(res, 'Task title is required');
     }
+
+    // Prepare the data
+    const taskData = {
+      title: title.trim(),
+      description: description?.trim() || '',
+      priority: priority || 'medium',
+      userId,
+      status: 'pending',
+      tags: tags || []
+    };
+
+    // Handle dueDate
+    if (dueDate && dueDate !== '') {
+      if (typeof dueDate === 'string' && dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        taskData.dueDate = new Date(dueDate + 'T00:00:00.000Z');
+      } else {
+        taskData.dueDate = new Date(dueDate);
+      }
+    }
+
+    // Handle categoryId - convert empty string to null
+    if (categoryId && categoryId !== '') {
+      // Verify category belongs to user
+      const category = await prisma.category.findFirst({
+        where: { id: categoryId, userId }
+      });
+      if (!category) {
+        return blossomError(res, 'Category not found or access denied', 404);
+      }
+      taskData.categoryId = categoryId;
+    } else {
+      taskData.categoryId = null;
+    }
+
+    console.log('Task data for creation:', taskData); // Debug
+
+    const task = await prisma.task.create({
+      data: taskData,
+      include: {
+        category: true
+      }
+    });
+
+    blossomResponse(res, { task }, 'Task created successfully!', 201);
+  } catch (error) {
+    console.error('Error creating task:', error);
+    
+    // More detailed error logging
+    if (error.code) {
+      console.error('Prisma error code:', error.code);
+      console.error('Prisma error meta:', error.meta);
+    }
+    
+    blossomError(res, `Failed to create task: ${error.message}`, 500);
+  }
 };
 
 // Update a task
@@ -121,25 +157,80 @@ const updateTask = async (req, res) => {
         const taskId = req.params.id;
         const updates = req.body;
 
-        const task = await TaskRepository.update(taskId, userId, updates);
+        console.log('Received update request:', { taskId, userId, updates }); // Debug
 
-        blossomSuccess(res, {
-            task,
-            blossom: {
-                status: 'refreshed',
-                emoji: '💦🌸'
+        // First check if task exists and belongs to user
+        const existing = await prisma.task.findFirst({
+            where: { id: taskId, userId }
+        });
+
+        if (!existing) {
+            return blossomError(res, 'Task not found', 404);
+        }
+
+        // Prepare the update data
+        const updateData = {};
+
+        // Only include fields that are being updated
+        if (updates.title !== undefined) updateData.title = updates.title.trim();
+        if (updates.description !== undefined) updateData.description = updates.description.trim();
+        if (updates.priority !== undefined) updateData.priority = updates.priority;
+        if (updates.status !== undefined) updateData.status = updates.status;
+
+        // Handle dueDate
+        if (updates.dueDate !== undefined) {
+            if (updates.dueDate === '' || updates.dueDate === null) {
+                updateData.dueDate = null;
+            } else if (typeof updates.dueDate === 'string' && updates.dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                updateData.dueDate = new Date(updates.dueDate + 'T00:00:00.000Z');
+            } else {
+                updateData.dueDate = new Date(updates.dueDate);
             }
-        }, 'Petal refreshed!');
+        }
+
+        // Handle categoryId - convert empty string to null
+        if (updates.categoryId !== undefined) {
+            if (updates.categoryId === '' || updates.categoryId === null) {
+                updateData.categoryId = null;
+            } else {
+                updateData.categoryId = updates.categoryId;
+
+                // Verify category belongs to user if it's being set
+                const category = await prisma.category.findFirst({
+                    where: { id: updates.categoryId, userId }
+                });
+                if (!category) {
+                    return blossomError(res, 'Category not found or access denied', 404);
+                }
+            }
+        }
+
+        // Handle tags
+        if (updates.tags !== undefined) {
+            updateData.tags = updates.tags || [];
+        }
+
+        console.log('Update data to send to Prisma:', updateData); // Debug
+
+        const task = await prisma.task.update({
+            where: { id: taskId },
+            data: updateData,
+            include: {
+                category: true
+            }
+        });
+
+        blossomResponse(res, { task }, 'Task updated successfully!');
     } catch (error) {
         console.error('Error updating task:', error);
 
-        if (error.message.includes('not found')) {
-            blossomError(res, error.message, 404);
-        } else if (error.message.startsWith('Validation failed')) {
-            blossomError(res, error.message, 400);
-        } else {
-            blossomError(res, 'Failed to update task', 500);
+        // More detailed error logging
+        if (error.code) {
+            console.error('Prisma error code:', error.code);
+            console.error('Prisma error meta:', error.meta);
         }
+
+        blossomError(res, `Failed to update task: ${error.message}`, 500);
     }
 };
 
@@ -149,26 +240,23 @@ const deleteTask = async (req, res) => {
         const userId = req.userId;
         const taskId = req.params.id;
 
-        const deletedTask = await TaskRepository.delete(taskId, userId);
+        // First check if task exists and belongs to user
+        const existing = await prisma.task.findFirst({
+            where: { id: taskId, userId }
+        });
 
-        // Get updated statistics
-        const stats = await TaskRepository.getStats(userId);
+        if (!existing) {
+            return blossomError(res, 'Task not found', 404);
+        }
 
-        blossomSuccess(res, {
-            deletedTask,
-            meta: {
-                remainingPetals: stats.total,
-                gardenStatus: 'still blooming'
-            }
-        }, 'Petal released to blossom again elsewhere!');
+        await prisma.task.delete({
+            where: { id: taskId }
+        });
+
+        blossomResponse(res, {}, 'Task deleted successfully!');
     } catch (error) {
         console.error('Error deleting task:', error);
-        
-        if (error.message.includes('not found')) {
-            blossomError(res, error.message, 404);
-        } else {
-            blossomError(res, 'Failed to delete task', 500);
-        }
+        blossomError(res, 'Failed to delete task', 500);
     }
 };
 
@@ -176,29 +264,71 @@ const deleteTask = async (req, res) => {
 const getTaskStats = async (req, res) => {
     try {
         const userId = req.userId;
-        const stats = await TaskRepository.getStats(userId);
 
-        blossomSuccess(res, {
-            stats,
-            blossom: {
-                gardenHealth: stats.completionRate > 50 ? 'thriving' : 'needs care',
-                recommendation: stats.highPriority > 0 ?
-                    `Focus on ${stats.highPriority} high priority petals` :
-                    'Your garden is balanced!'
-            }
-        }, 'Garden statistics gathered!');
+        const tasks = await prisma.task.findMany({
+            where: { userId }
+        });
+
+        const stats = {
+            total: tasks.length,
+            completed: tasks.filter(t => t.status === 'completed').length,
+            pending: tasks.filter(t => t.status === 'pending').length,
+            overdue: tasks.filter(t => {
+                if (!t.dueDate || t.status === 'completed') return false;
+                return new Date(t.dueDate) < new Date();
+            }).length,
+            highPriority: tasks.filter(t => t.priority === 'high').length,
+            mediumPriority: tasks.filter(t => t.priority === 'medium').length,
+            lowPriority: tasks.filter(t => t.priority === 'low').length
+        };
+
+        blossomResponse(res, { stats }, 'Statistics retrieved successfully!');
     } catch (error) {
         console.error('Error getting stats:', error);
         blossomError(res, 'Failed to get statistics', 500);
     }
 };
 
-// Export all controller functions
+// Toggle task completion
+const toggleTask = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const taskId = req.params.id;
+        const { completed } = req.body;
+
+        // Check if task exists and belongs to user
+        const task = await prisma.task.findFirst({
+            where: { id: taskId, userId }
+        });
+
+        if (!task) {
+            return blossomError(res, 'Task not found', 404);
+        }
+
+        const newStatus = completed ? 'completed' : 'pending';
+
+        const updatedTask = await prisma.task.update({
+            where: { id: taskId },
+            data: { status: newStatus },
+            include: { category: true }
+        });
+
+        blossomResponse(res, {
+            task: updatedTask,
+            message: newStatus === 'completed' ? 'Task completed!' : 'Task marked as pending'
+        });
+    } catch (error) {
+        console.error('Error toggling task:', error);
+        blossomError(res, 'Failed to toggle task status', 500);
+    }
+};
+
 module.exports = {
     getAllTasks,
     getTaskById,
     createTask,
     updateTask,
     deleteTask,
-    getTaskStats
+    getTaskStats,
+    toggleTask
 };
