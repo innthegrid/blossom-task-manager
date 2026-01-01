@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   CheckCircle,
   Clock,
+  Archive,
   AlertCircle,
   Plus,
   Calendar,
@@ -19,6 +20,8 @@ import { categoryService } from '../services/categoryService'
 import CategoryManagerModal from '../components/CategoryManagerModal'
 import TaskFormModal from '../components/TaskFormModal'
 import CategoryIcon from '../components/CategoryIcon'
+import Notification from '../components/Notification'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 const DashboardPage = () => {
   // States
@@ -30,11 +33,12 @@ const DashboardPage = () => {
     priority: 'all',
     category: 'all',
   })
-
-  // Modal states
   const [showTaskFormModal, setShowTaskFormModal] = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
+  const [notification, setNotification] = useState(null)
+  const [confirmArchive, setConfirmArchive] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   // Fetch data on component mount
   useEffect(() => {
@@ -57,15 +61,29 @@ const DashboardPage = () => {
     }
   }
 
-  // Handle task deletion
-  const handleDeleteTask = async (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      try {
-        await taskService.deleteTask(taskId)
-        setTasks(tasks.filter((task) => task.id !== taskId))
-      } catch (error) {
-        console.error('Failed to delete task:', error)
-      }
+  // Replace handleDeleteTask function:
+  const handleDeleteTask = (taskId) => {
+    setConfirmDelete(taskId)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return
+
+    try {
+      await taskService.deleteTask(confirmDelete)
+      setTasks(tasks.filter((task) => task.id !== confirmDelete))
+      setNotification({
+        message: 'Task deleted successfully!',
+        type: 'success',
+      })
+    } catch (error) {
+      console.error('Failed to delete task:', error)
+      setNotification({
+        message: 'Failed to delete task',
+        type: 'error',
+      })
+    } finally {
+      setConfirmDelete(null)
     }
   }
 
@@ -125,8 +143,12 @@ const DashboardPage = () => {
 
   // Filter tasks based on current filteres
   const filteredTasks = tasks.filter((task) => {
+    // EXCLUDE ARCHIVED TASKS FROM MAIN DASHBOARD
+    if (task.status === 'archived') return false
+
     const isActuallyOverdue = checkIsOverdue(task)
 
+    // Rest of your existing filter logic...
     // Status Filter Logic
     if (filters.status !== 'all') {
       if (filters.status === 'overdue') {
@@ -152,26 +174,33 @@ const DashboardPage = () => {
 
   // Stats calculation
   const stats = {
-    total: tasks.length,
+    // Filter out archived tasks from all stats
+    total: tasks.filter((t) => t.status !== 'archived').length,
     completed: tasks.filter((t) => t.status === 'completed').length,
     pending: tasks.filter((t) => t.status === 'pending').length,
-    // Fix: Using the same logic as your date helper for consistency
-    overdue: tasks.filter((t) => checkIsOverdue(t)).length,
+    overdue: tasks.filter((t) => checkIsOverdue(t) && t.status !== 'archived')
+      .length,
 
-    // High Priority
-    highTotal: tasks.filter((t) => t.priority === 'high').length,
+    // High Priority (exclude archived)
+    highTotal: tasks.filter(
+      (t) => t.priority === 'high' && t.status !== 'archived'
+    ).length,
     highDone: tasks.filter(
       (t) => t.priority === 'high' && t.status === 'completed'
     ).length,
 
-    // Medium Priority
-    mediumTotal: tasks.filter((t) => t.priority === 'medium').length,
+    // Medium Priority (exclude archived)
+    mediumTotal: tasks.filter(
+      (t) => t.priority === 'medium' && t.status !== 'archived'
+    ).length,
     mediumDone: tasks.filter(
       (t) => t.priority === 'medium' && t.status === 'completed'
     ).length,
 
-    // Low Priority
-    lowTotal: tasks.filter((t) => t.priority === 'low').length,
+    // Low Priority (exclude archived)
+    lowTotal: tasks.filter(
+      (t) => t.priority === 'low' && t.status !== 'archived'
+    ).length,
     lowDone: tasks.filter(
       (t) => t.priority === 'low' && t.status === 'completed'
     ).length,
@@ -247,6 +276,77 @@ const DashboardPage = () => {
 
   const dateStats = calculateDateBasedStats(tasks)
 
+  // Replace handleArchiveCompleted function:
+  const handleArchiveCompleted = () => {
+    if (stats.completed === 0) {
+      setNotification({
+        message: 'No completed tasks to archive!',
+        type: 'info',
+      })
+      return
+    }
+    setConfirmArchive(true)
+  }
+
+  const handleConfirmArchive = async () => {
+    try {
+      const result = await taskService.archiveCompletedTasks()
+      setNotification({
+        message: result.message,
+        type: 'success',
+      })
+      fetchData() // Refresh the task list
+    } catch (error) {
+      console.error('Failed to archive tasks:', error)
+      setNotification({
+        message: 'Failed to archive tasks. Please try again.',
+        type: 'error',
+      })
+    } finally {
+      setConfirmArchive(false)
+    }
+  }
+
+  // Add this helper function for custom confirmation:
+  const customConfirm = (message, title = 'Confirm') => {
+    return new Promise((resolve) => {
+      const modal = document.createElement('div')
+      modal.className =
+        'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'
+
+      modal.innerHTML = `
+      <div class="card-blossom max-w-md w-full">
+        <h3 class="text-xl font-heading text-blossom-dark mb-2">${title}</h3>
+        <p class="text-blossom-pink mb-6">${message}</p>
+        <div class="flex gap-3 justify-end">
+          <button id="cancel-btn" class="btn-blossom-outline">Cancel</button>
+          <button id="confirm-btn" class="btn-blossom">Archive</button>
+        </div>
+      </div>
+    `
+
+      document.body.appendChild(modal)
+
+      modal.querySelector('#confirm-btn').onclick = () => {
+        document.body.removeChild(modal)
+        resolve(true)
+      }
+
+      modal.querySelector('#cancel-btn').onclick = () => {
+        document.body.removeChild(modal)
+        resolve(false)
+      }
+
+      // Close on backdrop click
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal)
+          resolve(false)
+        }
+      }
+    })
+  }
+
   // Priority Colors
   const priorityColors = {
     high: 'bg-blossom-red-bg text-blossom-red-text',
@@ -293,7 +393,7 @@ const DashboardPage = () => {
                   className="btn-blossom flex items-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
-                  Add New Flower
+                  Add
                 </button>
                 <button
                   onClick={() => setShowCategoryManager(true)}
@@ -301,6 +401,17 @@ const DashboardPage = () => {
                 >
                   <Tag className="w-5 h-5" />
                   Categories
+                </button>
+
+                <button
+                  onClick={handleArchiveCompleted}
+                  disabled={stats.completed === 0}
+                  className={`btn-blossom-outline flex items-center gap-2 ${
+                    stats.completed === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <Archive className="w-5 h-5" />
+                  Archive
                 </button>
               </div>
             </div>
@@ -827,6 +938,38 @@ const DashboardPage = () => {
         onCategoryCreated={fetchData}
         onCategoryUpdated={fetchData}
         onCategoryDeleted={fetchData}
+      />
+
+      {/* Notification */}
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
+      {/* Archive Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmArchive}
+        onClose={() => setConfirmArchive(false)}
+        onConfirm={handleConfirmArchive}
+        title="Archive Completed Tasks"
+        message={`Archive all ${stats.completed} completed tasks? They will be moved to the Archive page.`}
+        confirmText="Archive All"
+        type="archive"
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="delete"
       />
     </div>
   )

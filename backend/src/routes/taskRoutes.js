@@ -27,4 +27,15 @@ router.delete('/:id', taskController.deleteTask);
 // Toggle task completion
 router.patch('/:id/toggle', taskController.toggleTask);
 
+// Add these routes after the existing ones:
+
+// Archive completed tasks
+router.post('/archive/completed', taskController.archiveCompletedTasks);
+
+// Get archived tasks
+router.get('/archive/list', taskController.getArchivedTasks);
+
+// Restore a task from archive
+router.patch('/:id/restore', taskController.restoreTask);
+
 module.exports = router;

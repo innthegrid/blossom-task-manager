@@ -89,5 +89,35 @@ export const taskService = {
     } catch (error) {
       throw error.response?.data || { error: 'Failed to get stats' }
     }
+  },
+
+  // Archive all completed tasks
+  async archiveCompletedTasks() {
+    try {
+      const response = await api.post('/tasks/archive/completed');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to archive tasks' };
+    }
+  },
+
+  // Get archived tasks
+  async getArchivedTasks(filters = {}) {
+    try {
+      const response = await api.get('/tasks/archive/list', { params: filters });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to get archived tasks' };
+    }
+  },
+
+  // Restore a task from archive
+  async restoreTask(id) {
+    try {
+      const response = await api.patch(`/tasks/${id}/restore`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to restore task' };
+    }
   }
 }

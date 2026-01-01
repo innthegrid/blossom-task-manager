@@ -50,7 +50,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* User Section - Login or User/Logout */}
+          {/* User Section - User/Logout */}
           <div className="hidden sm:flex sm:items-center">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">

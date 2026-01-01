@@ -344,6 +344,125 @@ const toggleTask = async (req, res) => {
     }
 };
 
+// Archive all completed tasks for a user
+const archiveCompletedTasks = async (req, res) => {
+    try {
+        const userId = req.userId;
+        
+        // Find all completed tasks for this user
+        const completedTasks = await prisma.task.findMany({
+            where: { 
+                userId, 
+                status: 'completed' 
+            }
+        });
+
+        if (completedTasks.length === 0) {
+            return blossomResponse(res, { 
+                archivedCount: 0,
+                message: 'No completed tasks to archive' 
+            });
+        }
+
+        // Update all completed tasks to archived status
+        const updateResult = await prisma.task.updateMany({
+            where: { 
+                userId, 
+                status: 'completed' 
+            },
+            data: { 
+                status: 'archived',
+                updatedAt: new Date()
+            }
+        });
+
+        blossomResponse(res, {
+            archivedCount: updateResult.count,
+            message: `Successfully archived ${updateResult.count} task${updateResult.count !== 1 ? 's' : ''}`
+        });
+    } catch (error) {
+        console.error('Error archiving tasks:', error);
+        blossomError(res, 'Failed to archive tasks', 500);
+    }
+};
+
+// Restore a task from archive to pending
+const restoreTask = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const taskId = req.params.id;
+
+        // First check if task exists, belongs to user, and is archived
+        const task = await prisma.task.findFirst({
+            where: { 
+                id: taskId, 
+                userId,
+                status: 'archived'
+            }
+        });
+
+        if (!task) {
+            return blossomError(res, 'Archived task not found', 404);
+        }
+
+        // Restore to pending status
+        const restoredTask = await prisma.task.update({
+            where: { id: taskId },
+            data: { 
+                status: 'pending',
+                updatedAt: new Date()
+            },
+            include: {
+                category: true,
+                subtasks: true
+            }
+        });
+
+        blossomResponse(res, { 
+            task: restoredTask,
+            message: 'Task restored successfully!' 
+        });
+    } catch (error) {
+        console.error('Error restoring task:', error);
+        blossomError(res, 'Failed to restore task', 500);
+    }
+};
+
+// Get all archived tasks for a user
+const getArchivedTasks = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { priority, categoryId } = req.query;
+
+        const where = { 
+            userId,
+            status: 'archived' // Only get archived tasks
+        };
+
+        if (priority && priority !== 'all') where.priority = priority;
+        if (categoryId && categoryId !== 'all') where.categoryId = categoryId;
+
+        const tasks = await prisma.task.findMany({
+            where,
+            include: {
+                category: true,
+                subtasks: true
+            },
+            orderBy: { updatedAt: 'desc' } // Show recently archived first
+        });
+
+        blossomResponse(res, {
+            tasks,
+            meta: {
+                count: tasks.length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching archived tasks:', error);
+        blossomError(res, 'Failed to fetch archived tasks', 500);
+    }
+};
+
 module.exports = {
     getAllTasks,
     getTaskById,
@@ -351,5 +470,8 @@ module.exports = {
     updateTask,
     deleteTask,
     getTaskStats,
-    toggleTask
+    toggleTask,
+    archiveCompletedTasks,
+    restoreTask,
+    getArchivedTasks
 };
