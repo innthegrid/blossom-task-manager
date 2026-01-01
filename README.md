@@ -10,6 +10,7 @@ This is a full-stack web application developed as a learning project to demonstr
 - **Smart Task Organizaton**: Priority levels (low/medium/high), status tracking (on track/complete/overdue), and deadlines
 - **Subtasks Support**: Break complex tasks into manageable steps with individual completion tracking
 - **Categories & Tags**: Dual organizational system with preset icons and custom colors
+- **Archive System**: Move completed tasks to archive for reference while keeping dashboard clean
 - **Advanced Filtering**: Filter by status, priority, and category
 
 ### **User Authentication & Secury**
@@ -23,6 +24,7 @@ This is a full-stack web application developed as a learning project to demonstr
 - **Priority Analysis**: Progress bars showing completion rates by priority level
 - **Category Insights**: Distribution and completion statistics across categories
 - **Time-Based Metrics**: Daily/weekly completion tracking with automatic resets
+- **Archive Statistics**: Insights into archived tasks with filtering options
 - **Visual Statistics**: Clean, color-coded progress bars
 
 ### **User Experience**
@@ -30,6 +32,30 @@ This is a full-stack web application developed as a learning project to demonstr
 - **Modal-Based Interface**: Clean, focused forms using overlay modals
 - **Real-Time Updates**: Instant feedback on all actions without page refreshes
 - **Cherry Blossom Theme**: Consistent color palette throughout the application
+- **Confirmation Dialogs**: Prevent accidental deletions with clear confirmations
+- **Notification System**: Toast notifications for user feedback on all actions
+
+## 🛠️ Technology Stack
+
+### **Frontend**
+| Technology | Purpose | Why I Chose It |
+|------------|---------|----------------|
+| **React 18** | UI Framework | Component-based architecture, excellent ecosystem |
+| **Tailwind CSS v4** | Styling | Utility-first, rapid development, CSS-in-JS alternative |
+| **Lucide React** | Icons | Consistent icon set, tree-shakeable, matches theme |
+| **Axios** | HTTP Client | Promise-based, interceptors for auth handling |
+| **React Router v6** | Navigation | Declarative routing with nested routes |
+| **Context API** | State Management | Built-in solution for global state needs |
+
+### **Backend**
+| Technology | Purpose | Why I Chose It |
+|------------|---------|----------------|
+| **Node.js + Express** | Server Framework | Fast, unopinionated, excellent middleware ecosystem |
+| **PostgreSQL** | Database | ACID compliance, JSON support, reliable for production |
+| **Prisma ORM** | Database Client | Type-safe, migrations, intuitive query API |
+| **JWT** | Authentication | Stateless, scalable, widely adopted standard |
+| **BCrypt.js** | Password Hashing | Industry standard for password security |
+| **Express Validator** | Input Validation | Middleware-based validation with custom error messages |
 
 ## 🛠️ Technology Stack
 
@@ -70,13 +96,16 @@ blossom-task-manager/
 │   │   │   ├── Layout.jsx    # Main layout with conditional Navbar
 │   │   │   ├── TaskFormModal.jsx    # Modal for task creation/editing
 │   │   │   ├── CategoryManagerModal.jsx  # Modal for category management
-│   │   │   └── CategoryIcon.jsx    # Dynamic icon component
+│   │   │   ├── CategoryIcon.jsx    # Dynamic icon component
+│   │   │   ├── Notification.jsx    # Toast notifications for user feedback
+│   │   │   └── ConfirmationModal.jsx # Interactive confirmation dialogs
 │   │   ├── pages/           # Page components
 │   │   │   ├── DashboardPage.jsx    # Main task dashboard
+│   │   │   ├── ArchivePage.jsx      # Archived tasks management
 │   │   │   ├── LoginPage.jsx        # Authentication page
 │   │   │   └── RegisterPage.jsx     # User registration
 │   │   ├── services/        # API service layers
-│   │   │   ├── taskService.js       # Task CRUD operations
+│   │   │   ├── taskService.js       # Task CRUD operations + archive
 │   │   │   └── categoryService.js   # Category management
 │   │   ├── api/            # API configuration
 │   │   │   └── axiosConfig.js      # Axios instance with interceptors
@@ -90,13 +119,16 @@ blossom-task-manager/
 │   │   ├── config/         # Configuration files
 │   │   │   └── database.js # Prisma client initialization
 │   │   ├── controllers/    # Request handlers
-│   │   │   ├── taskController.js    # Task business logic
+│   │   │   ├── taskController.js    # Task business logic + archive
 │   │   │   ├── authController.js    # Authentication logic
 │   │   │   └── categoryController.js # Category operations
 │   │   ├── middleware/     # Custom middleware
 │   │   │   └── auth.js     # JWT authentication
 │   │   ├── models/         # Data models (Prisma schema)
 │   │   ├── routes/         # API route definitions
+│   │   │   ├── taskRoutes.js       # Task endpoints + archive routes
+│   │   │   ├── authRoutes.js       # Authentication endpoints
+│   │   │   └── categoryRoutes.js   # Category endpoints
 │   │   ├── utils/          # Helper functions
 │   │   │   ├── jwt.js      # Token generation/validation
 │   │   │   └── password.js # Password hashing/validation
@@ -120,6 +152,7 @@ model User {
   categories Category[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  theme     String?   @default("cherry-blossom")
   
   @@map("users")
 }
@@ -128,9 +161,10 @@ model Task {
   id          String    @id @default(cuid())
   title       String
   description String?
-  status      String    @default("pending") // pending, completed
+  status      String    @default("pending") // pending, completed, archived
   priority    String    @default("medium")  // low, medium, high
   dueDate     DateTime?
+  recurring   String?   // null, daily, weekly, monthly
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   userId      String
@@ -140,14 +174,18 @@ model Task {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   
+  // Blossom-specific fields
+  flowerEmoji String?   @default("🌸")
+  isBlossom   Boolean   @default(true)
+  
   @@map("tasks")
 }
 
 model Category {
   id        String   @id @default(cuid())
   name      String
-  color     String   @default("#ffaabb")
-  icon      String   @default("Sprout") // Lucide icon name
+  color     String   @default("#ffaabb")  // Cherry blossom pink
+  icon      String   @default("🌸")
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tasks     Task[]
@@ -225,6 +263,41 @@ model Subtask {
    - **API Documentation**: http://localhost:5001/
    - **Prisma Studio**: http://localhost:5555
 
+## 🔧 API Endpoints
+
+### **Authentication**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Create a new user account |
+| POST | `/api/auth/login` | Authenticate user and get JWT |
+| GET | `/api/auth/me` | Get current user profile |
+
+### **Tasks**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/tasks` | Get all tasks for current user |
+| GET | `/api/tasks/:id` | Get specific task |
+| POST | `/api/tasks` | Create a new task |
+| PUT | `/api/tasks/:id` | Update a task |
+| DELETE | `/api/tasks/:id` | Delete a task |
+| PATCH | `/api/tasks/:id/toggle` | Toggle task completion |
+| GET | `/api/tasks/stats` | Get task statistics |
+
+### **Archive System**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/tasks/archive/completed` | Archive all completed tasks |
+| GET | `/api/tasks/archive/list` | Get all archived tasks |
+| PATCH | `/api/tasks/:id/restore` | Restore a task from archive |
+
+### **Categories**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/categories` | Get all categories |
+| POST | `/api/categories` | Create a new category |
+| PUT | `/api/categories/:id` | Update a category |
+| DELETE | `/api/categories/:id` | Delete a category |
+
 ## 🎨 Design System
 
 ### **Color Palette**
@@ -248,24 +321,27 @@ model Subtask {
 - **Cards**: Soft shadows, rounded corners, subtle hover effects
 - **Inputs**: Clear focus states with theme-appropriate colors
 - **Progress Bars**: Color-coded by priority with smooth animations
+- **Notifications**: Toast-style alerts with auto-dismiss
+- **Confirmation Modals**: Interactive dialogs for critical actions
 
 ## 🎯 Learning Outcomes
 
 ### **Technical Skills Gained**
-- **Full-Stack Development**: End-to-end application architecture
-- **Database Design**: PostgreSQL schema design and optimization
-- **API Design**: RESTful API patterns and best practices
-- **State Management**: Complex state patterns in React
-- **Authentication**: JWT implementation and security considerations
-- **Responsive Design**: Mobile-first CSS with Tailwind
-- **Deployment**: Environment configuration and deployment planning
+- **Full-Stack Development**: End-to-end application architecture from database to UI
+- **Database Design**: PostgreSQL schema design, migrations, and optimization
+- **API Design**: RESTful API patterns, authentication, and error handling
+- **State Management**: Complex state patterns in React with service layers
+- **Authentication**: JWT implementation, token refresh, and security best practices
+- **Responsive Design**: Mobile-first CSS with Tailwind and custom theming
+- **Component Architecture**: Reusable, maintainable component patterns
+- **Deployment Planning**: Environment configuration and deployment strategies
 
-### **Soft Skills Developed**
-- **Project Planning**: Feature prioritization and roadmap creation
-- **Problem Solving**: Debugging complex full-stack issues
-- **Documentation**: Clear technical and user documentation
-- **Time Management**: Balancing feature development with learning
-- **Attention to Detail**: Consistent theming and UX polish
+### **Project Management Skills**
+- **Feature Planning**: Breaking down complex features into manageable steps
+- **Version Control**: Git workflows and meaningful commit messages
+- **Documentation**: Comprehensive technical and user documentation
+- **Testing Strategy**: Manual testing flows and error handling
+- **Problem Solving**: Debugging full-stack issues and edge cases
 
 ## 🤝 Contributing
 While this is a personal learning project, suggestions and feedback are welcome! Feel free to open an issue if you have ideas for improvement.
