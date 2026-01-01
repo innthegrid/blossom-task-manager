@@ -23,28 +23,23 @@ import {
 import { taskService } from '../services/taskService'
 import { categoryService } from '../services/categoryService'
 import CategoryManagerModal from '../components/CategoryManagerModal'
+import TaskFormModal from '../components/TaskFormModal'
 
 const DashboardPage = () => {
   // States
   const [tasks, setTasks] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showTaskForm, setShowTaskForm] = useState(false)
-  const [editingTask, setEditingTask] = useState(null)
   const [filters, setFilters] = useState({
     status: 'all',
     priority: 'all',
     category: 'all',
   })
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    priority: 'medium',
-    dueDate: '',
-    categoryId: '',
-    tags: [],
-  })
+
+  // Modal states
+  const [showTaskFormModal, setShowTaskFormModal] = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
 
   // Fetch data on component mount
   useEffect(() => {
@@ -67,26 +62,6 @@ const DashboardPage = () => {
     }
   }
 
-  // Handle task creation
-  const handleCreateTask = async (e) => {
-    e.preventDefault()
-    try {
-      await taskService.createTask(newTask)
-      setShowTaskForm(false)
-      setNewTask({
-        title: '',
-        description: '',
-        priority: 'medium',
-        dueDate: '',
-        categoryId: '',
-        tags: [],
-      })
-      fetchData() // Refresh tasks
-    } catch (error) {
-      console.error('Failed to create task:', error)
-    }
-  }
-
   // Handle task deletion
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
@@ -96,53 +71,6 @@ const DashboardPage = () => {
       } catch (error) {
         console.error('Failed to delete task:', error)
       }
-    }
-  }
-
-  // Start editing a task
-  const handleStartEdit = (task) => {
-    console.log('Original task for editing:', task) // Debug log
-
-    setEditingTask(task)
-
-    // Format dueDate for the date input (YYYY-MM-DD)
-    let formattedDueDate = ''
-    if (task.dueDate) {
-      const date = new Date(task.dueDate)
-      // Get YYYY-MM-DD format for date input
-      formattedDueDate = date.toISOString().split('T')[0]
-    }
-
-    setNewTask({
-      title: task.title,
-      description: task.description || '',
-      priority: task.priority,
-      dueDate: formattedDueDate,
-      categoryId: task.categoryId || '',
-      tags: task.tags || [],
-    })
-
-    setShowTaskForm(true)
-  }
-
-  // Update a task
-  const handleUpdateTask = async (e) => {
-    e.preventDefault()
-    try {
-      await taskService.updateTask(editingTask.id, newTask)
-      setShowTaskForm(false)
-      setEditingTask(null)
-      setNewTask({
-        title: '',
-        description: '',
-        priority: 'medium',
-        dueDate: '',
-        categoryId: '',
-        tags: [],
-      })
-      fetchData() // Refresh tasks
-    } catch (error) {
-      console.error('Failed to update task:', error)
     }
   }
 
@@ -323,9 +251,8 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2/3 */}
         <div className="lg:col-span-2">
-          {/* Header with Quick Add */}
+          {/* Header */}
           <div className="mb-4">
-            {/* Add this near your "Add New Flower" button */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-heading text-blossom-dark">
@@ -337,11 +264,14 @@ const DashboardPage = () => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setShowTaskForm(true)}
+                  onClick={() => {
+                    setEditingTask(null)
+                    setShowTaskFormModal(true)
+                  }}
                   className="btn-blossom flex items-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
-                  Add
+                  Add New Flower
                 </button>
                 <button
                   onClick={() => setShowCategoryManager(true)}
@@ -353,217 +283,6 @@ const DashboardPage = () => {
               </div>
             </div>
           </div>
-
-          {/* Task Creation/Editing Form */}
-          {showTaskForm && (
-            <div className="card-blossom mb-8">
-              {/* Top Row */}
-              <div className="flex items-center justify-between mb-4">
-                {/* Form Title (New or Edit) */}
-                <h3 className="text-xl font-heading text-blossom-dark">
-                  {editingTask ? 'Edit Petal' : 'Plant a New Petal'}
-                </h3>
-
-                {/* X Button (Close Form) */}
-                <button
-                  onClick={() => {
-                    setShowTaskForm(false)
-                    setEditingTask(null)
-                    setNewTask({
-                      title: '',
-                      description: '',
-                      priority: 'medium',
-                      dueDate: '',
-                      categoryId: '',
-                      tags: [],
-                    })
-                  }}
-                  className="text-blossom-pink hover:text-blossom-dark"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Form Data */}
-              <form
-                onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
-                className="space-y-4"
-              >
-                {/* Task Title */}
-                <div>
-                  <label className="block text-sm font-medium text-blossom-dark mb-1">
-                    Petal Title*
-                  </label>
-                  <input
-                    type="text"
-                    value={newTask.title}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, title: e.target.value })
-                    }
-                    className="input-blossom text-blossom-dark"
-                    placeholder="What needs to grow?"
-                    required
-                  />
-                </div>
-
-                {/* Task Description */}
-                <div>
-                  <label className="block text-sm font-medium text-blossom-dark mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    value={newTask.description}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, description: e.target.value })
-                    }
-                    className="input-blossom text-blossom-dark resize-none min-h-[80px]"
-                    placeholder="Add details about this petal..."
-                  />
-                </div>
-
-                {/* Priority, Due Date, and Category Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Task Priority (Low/Medium/High) */}
-                  <div>
-                    <label className="block text-sm font-medium text-blossom-dark mb-1">
-                      Priority
-                    </label>
-                    <select
-                      value={newTask.priority}
-                      onChange={(e) =>
-                        setNewTask({ ...newTask, priority: e.target.value })
-                      }
-                      className="input-blossom text-blossom-dark"
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                  </div>
-
-                  {/* Task Due Date */}
-                  <div>
-                    <label className="block text-sm font-medium text-blossom-dark mb-1">
-                      Due Date
-                    </label>
-                    <input
-                      type="date"
-                      value={newTask.dueDate}
-                      onChange={(e) =>
-                        setNewTask({ ...newTask, dueDate: e.target.value })
-                      }
-                      className="input-blossom text-blossom-dark"
-                    />
-                  </div>
-
-                  {/* Task Category */}
-                  <div>
-                    <label className="block text-sm font-medium text-blossom-dark mb-1">
-                      Category
-                    </label>
-                    <select
-                      value={newTask.categoryId}
-                      onChange={(e) =>
-                        setNewTask({ ...newTask, categoryId: e.target.value })
-                      }
-                      className="input-blossom text-blossom-dark"
-                    >
-                      <option value="">No Category</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.icon} {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Tags Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-blossom-dark mb-2">
-                      Tags (press Enter to add)
-                    </label>
-                    <div className="input-blossom min-h-[44px] flex flex-wrap items-center gap-1 py-1">
-                      {newTask.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-blossom-bg text-blossom-pink text-xs rounded-full"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setNewTask({
-                                ...newTask,
-                                tags: newTask.tags.filter(
-                                  (_, i) => i !== index
-                                ),
-                              })
-                            }}
-                            className="text-blossom-pink hover:text-blossom-dark"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                      <input
-                        type="text"
-                        placeholder="Add a tag..."
-                        className="flex-1 min-w-[120px] border-0 bg-transparent focus:outline-none text-blossom-dark placeholder:text-blossom-pink/50"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && e.target.value.trim()) {
-                            e.preventDefault()
-                            if (!newTask.tags.includes(e.target.value.trim())) {
-                              setNewTask({
-                                ...newTask,
-                                tags: [...newTask.tags, e.target.value.trim()],
-                              })
-                            }
-                            e.target.value = ''
-                          }
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs text-blossom-pink/70 mt-1">
-                      Press Enter to add tags for better organization
-                    </p>
-                  </div>
-                </div>
-                {/* End Form Data */}
-
-                {/* Bottom Buttons Row */}
-                <div className="flex gap-3 pt-2">
-                  {/* Submit Buttons (Create or Update) */}
-                  <button
-                    type="submit"
-                    className="btn-blossom flex-1 flex items-center justify-center gap-2"
-                  >
-                    {editingTask ? 'Update Task' : 'Create Task'}
-                  </button>
-
-                  {/* Cancel Button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowTaskForm(false)
-                      setEditingTask(null)
-                      setNewTask({
-                        title: '',
-                        description: '',
-                        priority: 'medium',
-                        dueDate: '',
-                        categoryId: '',
-                        tags: [],
-                      })
-                    }}
-                    className="btn-blossom-outline flex-1"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-          {/* End Form */}
 
           {/* Filters */}
           <div className="card-blossom mb-6">
@@ -674,7 +393,10 @@ const DashboardPage = () => {
                               {task.status === 'pending' && (
                                 <>
                                   <button
-                                    onClick={() => handleStartEdit(task)}
+                                    onClick={() => {
+                                      setEditingTask(task)
+                                      setShowTaskFormModal(true)
+                                    }}
                                     className="text-blossom-pink hover:text-blossom-dark transition-opacity"
                                     title="Edit task"
                                   >
@@ -975,6 +697,17 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
+      {/* Task Form Modal */}
+      <TaskFormModal
+        isOpen={showTaskFormModal}
+        onClose={() => {
+          setShowTaskFormModal(false)
+          setEditingTask(null)
+        }}
+        editingTask={editingTask}
+        onTaskSaved={fetchData}
+      />
+
       {/* Category Manager Modal */}
       <CategoryManagerModal
         isOpen={showCategoryManager}
