@@ -22,6 +22,7 @@ import TaskFormModal from '../components/TaskFormModal'
 import CategoryIcon from '../components/CategoryIcon'
 import Notification from '../components/Notification'
 import ConfirmationModal from '../components/ConfirmationModal'
+import { calculateDateBasedStats } from '../utils/taskDateStats'
 
 const DashboardPage = () => {
   // States
@@ -100,12 +101,12 @@ const DashboardPage = () => {
   const handleToggleTask = async (taskId, currentStatus) => {
     try {
       const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
-      await taskService.updateTask(taskId, { status: newStatus })
+      const { task: updatedTask } = await taskService.updateTask(taskId, { status: newStatus })
+      const { status, completedAt } = updatedTask
 
-      // Update local state
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, status: newStatus } : task
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === taskId ? { ...task, status, completedAt } : task
         )
       )
     } catch (error) {
@@ -125,8 +126,8 @@ const DashboardPage = () => {
 
       await taskService.updateTask(task.id, { subtasks: updatedSubtasks })
 
-      setTasks(
-        tasks.map((t) =>
+      setTasks((currentTasks) =>
+        currentTasks.map((t) =>
           t.id === task.id ? { ...t, subtasks: updatedSubtasks } : t
         )
       )
@@ -196,74 +197,6 @@ const DashboardPage = () => {
     lowDone: tasks.filter(
       (t) => t.priority === 'low' && t.status === 'completed'
     ).length,
-  }
-
-  // Check if given date is today
-  const isToday = (dateStr) => {
-    if (!dateStr) return false
-    const today = new Date()
-    const checkDate = new Date(dateStr)
-
-    return (
-      checkDate.getUTCDate() === today.getDate() &&
-      checkDate.getUTCMonth() === today.getMonth() &&
-      checkDate.getUTCFullYear() === today.getFullYear()
-    )
-  }
-
-  // Check if given date is this week
-  const isThisWeek = (dateStr) => {
-    if (!dateStr) return false
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    // Get the start of the current week (Sunday)
-    const startOfWeek = new Date(today)
-    startOfWeek.setDate(today.getDate() - today.getDay())
-
-    // Get the end of the current week (Saturday)
-    const endOfWeek = new Date(startOfWeek)
-    endOfWeek.setDate(startOfWeek.getDate() + 6)
-    endOfWeek.setHours(23, 59, 59, 999)
-
-    const checkDate = new Date(dateStr)
-
-    // Use UTC methods to compare the database string correctly
-    const checkTime = Date.UTC(
-      checkDate.getUTCFullYear(),
-      checkDate.getUTCMonth(),
-      checkDate.getUTCDate()
-    )
-
-    return (
-      checkTime >= startOfWeek.getTime() && checkTime <= endOfWeek.getTime()
-    )
-  }
-
-  const calculateDateBasedStats = (tasks) => {
-    // Use the raw strings so our UTC-aware helpers can handle them
-    const tasksDueToday = tasks.filter((task) => isToday(task.dueDate))
-    const tasksDueThisWeek = tasks.filter((task) => isThisWeek(task.dueDate))
-
-    const completedTodayCount = tasks.filter((task) => {
-      if (task.status !== 'completed') return false
-      // Completed date is a full timestamp, so local comparison is fine here
-      const completedDate = new Date(task.updatedAt || task.createdAt)
-      const today = new Date()
-      return (
-        completedDate.getDate() === today.getDate() &&
-        completedDate.getMonth() === today.getMonth() &&
-        completedDate.getFullYear() === today.getFullYear()
-      )
-    }).length
-
-    return {
-      todayTotal: tasksDueToday.length,
-      todayDone: tasksDueToday.filter((t) => t.status === 'completed').length,
-      weekTotal: tasksDueThisWeek.length,
-      weekDone: tasksDueThisWeek.filter((t) => t.status === 'completed').length,
-      completedToday: completedTodayCount,
-    }
   }
 
   const dateStats = calculateDateBasedStats(tasks)

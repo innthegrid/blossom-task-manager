@@ -23,9 +23,15 @@ This is a full-stack web application developed as a learning project to demonstr
 - **Garden Health Dashboard**: Real-time progress tracking with visual indicators
 - **Priority Analysis**: Progress bars showing completion rates by priority level
 - **Category Insights**: Distribution and completion statistics across categories
-- **Time-Based Metrics**: Daily/weekly completion tracking with automatic resets
+- **Time-Based Metrics**: Daily and weekly due-date totals, and completions counted by local calendar day
 - **Archive Statistics**: Insights into archived tasks with filtering options
 - **Visual Statistics**: Clean, color-coded progress bars
+
+Blossom stores each task’s latest completion time in PostgreSQL. Edits and
+archiving preserve that time. Reopening or restoring a task clears it, and
+completing the task again records a new time. Tasks completed before this
+tracking was added have an unknown completion time and are omitted from
+**Completed Today** until they are completed again.
 
 ### **User Experience**
 - **Responsive Design**: Fully functional on mobile, tablet, and desktop
