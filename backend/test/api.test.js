@@ -1,7 +1,9 @@
 const assert = require('node:assert/strict');
+const { execFile } = require('node:child_process');
 const { randomUUID } = require('node:crypto');
 const { once } = require('node:events');
 const { after, before, test } = require('node:test');
+const { promisify } = require('node:util');
 const jwt = require('jsonwebtoken');
 
 if (!process.env.TEST_DATABASE_URL) {
@@ -151,4 +153,38 @@ test('task lifecycle preserves subtasks through completion, archive, and restore
 
     await request(path, { method: 'DELETE', token });
     await request(path, { token, status: 404 });
+});
+
+test('demo seeding preserves existing tasks and demo edits on repeat runs', async () => {
+    const { tokens: { accessToken: ownerToken } } = await register();
+    const existingTask = await createTask(ownerToken, { title: 'Keep this task' });
+    const demoEmail = `demo-${randomUUID()}@example.com`;
+    emails.push(demoEmail);
+    const password = 'BlossomDemo42';
+
+    function seed(demoPassword) {
+        return promisify(execFile)(process.execPath, [require.resolve('../src/scripts/seed')], {
+            env: { ...process.env, DEMO_EMAIL: demoEmail, DEMO_PASSWORD: demoPassword },
+        });
+    }
+
+    await seed(password);
+    const { tokens: { accessToken: demoToken } } = await request('/auth/login', {
+        method: 'POST',
+        body: { email: demoEmail, password },
+    });
+    const { tasks } = await request('/tasks', { token: demoToken });
+    assert.equal(tasks.length, 5);
+
+    await request(`/tasks/${tasks[0].id}`, {
+        method: 'PUT', token: demoToken, body: { title: 'Edited demo task' },
+    });
+    await seed('DifferentPass42');
+
+    const demoAfter = await request('/tasks', { token: demoToken });
+    assert.equal(demoAfter.tasks.length, tasks.length);
+    assert.ok(demoAfter.tasks.some(({ title }) => title === 'Edited demo task'));
+    const ownerAfter = await request(`/tasks/${existingTask.id}`, { token: ownerToken });
+    assert.equal(ownerAfter.task.title, existingTask.title);
+    await request('/auth/login', { method: 'POST', body: { email: demoEmail, password } });
 });

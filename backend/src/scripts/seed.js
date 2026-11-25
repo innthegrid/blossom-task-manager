@@ -1,99 +1,73 @@
+require('dotenv').config();
+
+const { Prisma } = require('@prisma/client');
 const { prisma } = require('../config/database');
-const { hashPassword } = require('../utils/password');
+const { hashPassword, validatePassword } = require('../utils/password');
+
+const sampleTasks = [
+  {
+    title: 'Water the cherry blossom tree',
+    description: 'It needs hydration to bloom beautifully',
+    priority: 'high',
+    flowerEmoji: '💧'
+  },
+  {
+    title: 'Plan a cherry blossom viewing party',
+    description: 'Invite friends for hanami (flower viewing)',
+    subtasks: { create: [{ title: 'Pick a date', completed: true }, { title: 'Send invitations' }] }
+  },
+  {
+    title: 'Learn about sakura varieties',
+    priority: 'low',
+    status: 'completed',
+    flowerEmoji: '📚'
+  },
+  {
+    title: 'Buy gardening tools',
+    description: 'Pruning shears and a watering can',
+    priority: 'high',
+    flowerEmoji: '🛒'
+  },
+  {
+    title: 'Design the Blossom app logo',
+    status: 'archived',
+    flowerEmoji: '🎨'
+  }
+];
 
 async function seedDatabase() {
-  console.log('🌸 Starting database seed...');
+  const email = process.env.DEMO_EMAIL?.trim() || 'blossom@example.com';
+  const password = process.env.DEMO_PASSWORD;
+  const validation = validatePassword(password);
+
+  if (!validation.isValid) {
+    throw new Error(`Set a valid DEMO_PASSWORD. ${validation.errors.join('. ')}.`);
+  }
 
   try {
-    // Clear existing data
-    await prisma.task.deleteMany({});
-    await prisma.user.deleteMany({});
-
-    // Hash password before creating user
-    const hashedPassword = await hashPasword('blossom123');
-
-    // Create a test user
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
-        email: 'blossom@example.com',
-        password: hashedPassword,
+        email,
+        password: await hashPassword(password),
         username: 'CherryBlossomFan',
-        theme: 'cherry-blossom'
+        tasks: { create: sampleTasks }
       }
     });
-
-    console.log(`🌸 Created user: ${user.email} (ID: ${user.id})`);
-    console.log(`🌸 Test password: blossom123`);
-
-    // Create some sample tasks for the user
-    const sampleTasks = [
-      {
-        title: 'Water the cherry blossom tree',
-        description: 'It needs hydration to bloom beautifully',
-        priority: 'high',
-        status: 'pending',
-        flowerEmoji: '💧',
-        userId: user.id
-      },
-      {
-        title: 'Plan cherry blossom viewing party',
-        description: 'Invite friends for hanami (flower viewing)',
-        priority: 'medium',
-        status: 'pending',
-        flowerEmoji: '🌸',
-        userId: user.id
-      },
-      {
-        title: 'Learn about sakura varieties',
-        description: 'Research different types of cherry blossoms',
-        priority: 'low',
-        status: 'completed',
-        flowerEmoji: '📚',
-        userId: user.id
-      },
-      {
-        title: 'Buy gardening tools',
-        description: 'Pruning shears and watering can for blossom care',
-        priority: 'high',
-        status: 'pending',
-        flowerEmoji: '🛒',
-        userId: user.id
-      },
-      {
-        title: 'Design Blossom app logo',
-        description: 'Create cherry blossom themed logo for our app',
-        priority: 'medium',
-        status: 'in-progress',
-        flowerEmoji: '🎨',
-        userId: user.id
-      }
-    ];
-
-    // Create all tasks
-    for (const taskData of sampleTasks) {
-      const task = await prisma.task.create({
-        data: taskData
-      });
-      console.log(`Created task: ${task.title}`);
-    }
-
-    console.log(`
-    🌸 Database seeded successfully!
-    
-    User ID to use in API calls: ${user.id}
-    Test email: blossom@example.com
-    
-    You can now:
-    1. Get tasks: curl http://localhost:5001/api/tasks?userId=${user.id}
-    2. Try creating your own tasks with userId=${user.id}
-    `);
-
+    console.log(`Created the demo account ${email} with ${sampleTasks.length} sample tasks.`);
   } catch (error) {
-    console.error('🍂 Error seeding database:', error);
-  } finally {
-    await prisma.$disconnect();
+    // Creating the user and tasks together rolls them all back if the email already exists.
+    if (error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' && error.meta?.target?.includes('email')) {
+      console.log(`An account already exists for ${email}. No changes made.`);
+      return;
+    }
+    throw error;
   }
 }
 
-// Run the seed function
-seedDatabase();
+seedDatabase()
+  .catch((error) => {
+    console.error(`Demo seed failed: ${error.message}`);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());
