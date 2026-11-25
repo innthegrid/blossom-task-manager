@@ -14,7 +14,6 @@ Tests the database connection and basic CRUD operations.
 
 **Prerequisites:**
 1. Server must be running: `npm run dev`
-2. Database must be seeded: `node src/scripts/seed.js`
 
 ### Running via npm
 Add to `package.json` scripts:
@@ -30,28 +29,10 @@ Then run:
 npm run test:db
 ```
 
-## 🗃️ Seed Script
+## Demo data
 
-### `src/scripts/seed.js`
-Populates the database with sample data for development.
-
-**Usage:**
-```bash
-node src/scripts/seed.js
-```
-
-**What it creates:**
-- 1 test user (blossom@example.com)
-- 5 sample tasks with cherry blossom theme
-- Prints the user ID for API testing
-
-## 🧪 Testing Workflow
-
-1. **Start the database:** `brew services start postgresql`
-2. **Run migrations:** `npx prisma migrate dev`
-3. **Seed data:** `npm run seed`
-4. **Start server:** `npm run dev`
-5. **Test API:** `npm run test:db`
+Follow [the demo setup instructions](../../README.md#optional-demo-data) to
+create an account with sample tasks. The seed command preserves existing data.
 
 ## 🔍 Database Tools
 

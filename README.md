@@ -211,57 +211,67 @@ model Subtask {
 
 ## 🚀 Getting Started
 
-### **Prerequisites**
-- Node.js (v18 or higher)
-- PostgreSQL (v14 or higher)
-- Git
+### Prerequisites
 
-### **Local Development Setup**
+- Node.js 22.12+ and npm
+- A running PostgreSQL 14+ server and a database your PostgreSQL user can access
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/blossom-task-manager.git
-   cd blossom-task-manager
-   ```
+### Local development
 
-2. **Set up the backend**
-   ```bash
-   cd backend
-   npm install
-   cp .env.example .env
-   # Edit .env with your PostgreSQL credentials
-   ```
+```bash
+git clone https://github.com/innthegrid/blossom-task-manager.git
+cd blossom-task-manager
+createdb blossom_db
+cd backend
+cp .env.example .env
+node -p "require('node:crypto').randomBytes(32).toString('hex')"
+```
 
-3. **Initialize the database**
-   ```bash
-   createdb blossom_db
-   npx prisma migrate dev
-   npx prisma db seed
-   ```
+Paste the generated value into `JWT_SECRET` in `backend/.env`.
+Replace `YOUR_POSTGRES_USER` in `DATABASE_URL` with your PostgreSQL username. Add
+a password or change the host and port to match your local database.
 
-4. **Start the backend server**
-   ```bash
-   npm run dev
-   # Server runs on http://localhost:5001
-   ```
+```bash
+npm ci
+npm run generate
+npx prisma migrate deploy
+npm run dev
+```
 
-5. **Set up the frontend**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+In a second terminal, from the repository root:
 
-6. **Start the frontend development server**
-   ```bash
-   npm run dev
-   # App runs on http://localhost:5173
-   ```
+```bash
+cd frontend
+cp .env.example .env
+npm ci
+npm run dev
+```
 
-7. **Access the application**
-   - **Frontend**: http://localhost:5173
-   - **Backend API**: http://localhost:5001
-   - **API Documentation**: http://localhost:5001/
-   - **Prisma Studio**: http://localhost:5555
+Open [Blossom](http://localhost:5173) and register an account. The API runs on
+port 5001 by default. Use `npm run studio` from `backend/` to inspect the database.
+
+### Optional demo data
+
+From `backend/`, set `DEMO_PASSWORD` in `.env` to a password with at least six
+characters, one uppercase letter, and one digit. Then run `npm run seed` and
+sign in as `blossom@example.com` with that password. Set `DEMO_EMAIL` to use a
+different address. The command creates a single account with sample tasks and
+leaves existing accounts and tasks intact. On repeat runs it leaves the demo
+account intact, including its password and any edits.
+
+### Hosting configuration
+
+| Where | Variable | Value |
+| --- | --- | --- |
+| API runtime | `DATABASE_URL` | PostgreSQL connection string |
+| API runtime | `JWT_SECRET` | Random signing secret kept private |
+| API runtime | `FRONTEND_ORIGIN` | Frontend origin, such as `https://blossom.example.com` |
+| API runtime | `PORT` | Port assigned by the host, or `5001` by default |
+| Frontend build | `VITE_API_BASE_URL` | Public API URL ending in `/api`, such as `https://api.example.com/api` |
+
+Set the frontend URL before running `npm run build`. Configure the static host
+to serve `index.html` for client-side routes. Run `npx prisma migrate deploy` against
+the hosted database before starting the API.
 
 ## 🔧 API Endpoints
 
