@@ -7,7 +7,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { categoryService } from '../services/categoryService'
-import CategoryIcon, { ICON_MAP } from '../components/CategoryIcon'
+import CategoryIcon from './CategoryIcon'
+import { ICON_MAP } from './categoryIcons'
 
 // Map string names to the actual Lucide components
 const PRESET_ICONS = Object.keys(ICON_MAP)
@@ -42,12 +43,6 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
     return <LucideIcon className={className} />
   }
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchCategories()
-    }
-  }, [isOpen])
-
   const fetchCategories = async () => {
     try {
       const data = await categoryService.getCategories()
@@ -56,6 +51,21 @@ const CategoryManagerModal = ({ isOpen, onClose, onCategoryCreated }) => {
       console.error('Failed to fetch categories:', error)
     }
   }
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    let active = true
+    categoryService.getCategories()
+      .then((data) => {
+        if (active) setCategories(data.categories || [])
+      })
+      .catch((error) => console.error('Failed to fetch categories:', error))
+
+    return () => {
+      active = false
+    }
+  }, [isOpen])
 
   const handleCreateCategory = async (e) => {
     e.preventDefault()

@@ -14,7 +14,7 @@ This is a full-stack web application developed as a learning project to demonstr
 - **Advanced Filtering**: Filter by status, priority, and category
 
 ### **User Authentication & Secury**
-- **JWT-Based Authenticaton**: Secure login with access/refresh token rotation
+- **JWT-Based Authentication**: Login with access tokens and automatic session refresh
 - **Password Security**: BCrypt hashing with strength validation and security tips
 - **Protected Routes**: Role-based access control for all user data
 - **Session Management**: Persistent login with automatic token refresh

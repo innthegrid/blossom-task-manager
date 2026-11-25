@@ -71,7 +71,7 @@ export const authService = {
       
       const response = await api.post('/auth/validate')
       return response.data
-    } catch (error) {
+    } catch {
       return { valid: false }
     }
   }

@@ -9,9 +9,6 @@ const { connectDB } = require('./config/database');
 // Create an instance of express (the app)
 const app = express();
 
-// Connect to database
-connectDB();
-
 // Middleware
 app.use(cors({
     origin: 'http://localhost:5173',
@@ -68,30 +65,11 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Set the port (use environment variable or default to 3000)
-const PORT = process.env.PORT || 5001;
+if (require.main === module) {
+    const port = process.env.PORT || 5001;
+    connectDB().then(() => {
+        app.listen(port, () => console.log(`Blossom API listening on port ${port}`));
+    });
+}
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`
-        Blossom server is blooming on port ${PORT}!
-
-        Welcome to your task manager backend
-        Local: http://localhost:${PORT}
-
-        Available endpoints:
-        API Root: http://localhost:${PORT}/
-        Tasks: http://localhost:${PORT}/api/tasks
-        Auth: http://localhost:${PORT}/api/auth
-        Stats: http://localhost:${PORT}/api/tasks/stats
-        Blossom: http://localhost:${PORT}/api/blossom
-        Health: http://localhost:${PORT}/api/health
-        Garden: http://localhost:${PORT}/api/tasks/garden/blossoms
-
-        Database: PostgreSQL + Prisma
-        Auth: JWT Tokens
-        Theme: Cherry Blossom
-
-        Press CTRL+C to stop the server.
-    `);
-})
+module.exports = app;

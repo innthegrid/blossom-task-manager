@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Archive,
   RefreshCw,
@@ -35,12 +35,29 @@ const ArchivePage = () => {
 
   const navigate = useNavigate()
 
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchData()
-  }, [filters])
+  const calculateStats = useCallback((taskList) => {
+    const high = taskList.filter((t) => t.priority === 'high').length
+    const medium = taskList.filter((t) => t.priority === 'medium').length
+    const low = taskList.filter((t) => t.priority === 'low').length
 
-  const fetchData = async () => {
+    // Find oldest archived task
+    const oldest =
+      taskList.length > 0
+        ? taskList.reduce((oldest, task) =>
+            new Date(task.updatedAt) < new Date(oldest.updatedAt)
+              ? task
+              : oldest
+          )
+        : null
+
+    setStats({
+      total: taskList.length,
+      byPriority: { high, medium, low },
+      oldest: oldest ? new Date(oldest.updatedAt).toLocaleDateString() : null,
+    })
+  }, [])
+
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const [tasksData, categoriesData] = await Promise.all([
@@ -61,29 +78,12 @@ const ArchivePage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, calculateStats])
 
-  const calculateStats = (taskList) => {
-    const high = taskList.filter((t) => t.priority === 'high').length
-    const medium = taskList.filter((t) => t.priority === 'medium').length
-    const low = taskList.filter((t) => t.priority === 'low').length
-
-    // Find oldest archived task
-    const oldest =
-      taskList.length > 0
-        ? taskList.reduce((oldest, task) =>
-            new Date(task.updatedAt) < new Date(oldest.updatedAt)
-              ? task
-              : oldest
-          )
-        : null
-
-    setStats({
-      total: taskList.length,
-      byPriority: { high, medium, low },
-      oldest: oldest ? new Date(oldest.updatedAt).toLocaleDateString() : null,
-    })
-  }
+  // Reload when archive filters change
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   // Replace handleRestoreTask function:
   const handleRestoreTask = (taskId) => {

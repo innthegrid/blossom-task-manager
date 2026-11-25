@@ -59,3 +59,17 @@ node src/scripts/seed.js
 - **PostgreSQL CLI:** `psql -d blossom_db -U blossom_user`
 - **Reset database:** `npx prisma migrate reset`
 ```
+## Automated API integration tests
+
+From `backend/`, set `TEST_DATABASE_URL` to a dedicated PostgreSQL test database,
+then run:
+
+```bash
+DATABASE_URL="$TEST_DATABASE_URL" npx prisma migrate deploy
+npm run generate
+npm test
+```
+
+The tests start the Express app on an ephemeral port and clean up the accounts
+they create. GitHub Actions runs them against PostgreSQL on pushes and pull
+requests.

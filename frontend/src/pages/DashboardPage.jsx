@@ -298,56 +298,11 @@ const DashboardPage = () => {
     }
   }
 
-  const customConfirm = (message, title = 'Confirm') => {
-    return new Promise((resolve) => {
-      const modal = document.createElement('div')
-      modal.className =
-        'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'
-
-      modal.innerHTML = `
-      <div class="card-blossom max-w-md w-full">
-        <h3 class="text-xl font-heading text-blossom-dark mb-2">${title}</h3>
-        <p class="text-blossom-pink mb-6">${message}</p>
-        <div class="flex gap-3 justify-end">
-          <button id="cancel-btn" class="btn-blossom-outline">Cancel</button>
-          <button id="confirm-btn" class="btn-blossom">Archive</button>
-        </div>
-      </div>
-    `
-
-      document.body.appendChild(modal)
-
-      modal.querySelector('#confirm-btn').onclick = () => {
-        document.body.removeChild(modal)
-        resolve(true)
-      }
-
-      modal.querySelector('#cancel-btn').onclick = () => {
-        document.body.removeChild(modal)
-        resolve(false)
-      }
-
-      // Close on backdrop click
-      modal.onclick = (e) => {
-        if (e.target === modal) {
-          document.body.removeChild(modal)
-          resolve(false)
-        }
-      }
-    })
-  }
-
   // Priority Colors
   const priorityColors = {
     high: 'bg-blossom-red-bg text-blossom-red-text',
     medium: 'bg-blossom-yellow-bg text-blossom-yellow-text',
     low: 'bg-blossom-green-bg text-blossom-green-text',
-  }
-
-  // Completion Status Icons
-  const statusIcons = {
-    completed: <CheckCircle className="w-5 h-5 text-blossom-green-text" />,
-    overdue: <AlertCircle className="w-5 h-5 text-blossom-red-text" />,
   }
 
   if (loading) {
@@ -476,7 +431,6 @@ const DashboardPage = () => {
             ) : (
               filteredTasks.map((task) => {
                 const isTaskOverdue = checkIsOverdue(task)
-                const displayStatus = isTaskOverdue ? 'overdue' : task.status
 
                 return (
                   <div key={task.id} className="card-blossom group">

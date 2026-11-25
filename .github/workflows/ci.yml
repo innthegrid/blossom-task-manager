@@ -1,0 +1,58 @@
+name: CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: blossom
+          POSTGRES_PASSWORD: blossom
+          POSTGRES_DB: blossom_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U blossom -d blossom_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://blossom:blossom@localhost:5432/blossom_test?schema=public
+      TEST_DATABASE_URL: postgresql://blossom:blossom@localhost:5432/blossom_test?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run generate
+      - run: npx prisma migrate deploy
+      - run: npm test
