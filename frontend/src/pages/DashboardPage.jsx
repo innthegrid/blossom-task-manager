@@ -6,6 +6,7 @@ import {
   AlertCircle,
   Plus,
   Calendar,
+  Repeat,
   Tag,
   Edit2,
   Trash2,
@@ -102,7 +103,12 @@ const DashboardPage = () => {
     try {
       const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
       const { task: updatedTask } = await taskService.updateTask(taskId, { status: newStatus })
-      const { status, completedAt } = updatedTask
+      const { status, completedAt, recurring } = updatedTask
+
+      if (status === 'completed' && ['daily', 'weekly'].includes(recurring)) {
+        await fetchData()
+        return
+      }
 
       setTasks((currentTasks) =>
         currentTasks.map((task) =>
@@ -110,7 +116,10 @@ const DashboardPage = () => {
         )
       )
     } catch (error) {
-      console.error('Failed to toggle task:', error)
+      setNotification({
+        message: error.error || 'Could not update the task. Please try again.',
+        type: 'error',
+      })
     }
   }
 
@@ -371,6 +380,7 @@ const DashboardPage = () => {
                       {/* Checkbox */}
                       <button
                         onClick={() => handleToggleTask(task.id, task.status)}
+                        aria-label={task.status === 'completed' ? `Reopen ${task.title}` : `Complete ${task.title}`}
                         className={`mt-1 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                           task.status === 'completed'
                             ? 'bg-blossom-green-text border-blossom-green-text shadow-sm'
@@ -490,6 +500,13 @@ const DashboardPage = () => {
                                   undefined,
                                   { timeZone: 'UTC' }
                                 )}
+                              </span>
+                            )}
+
+                            {['daily', 'weekly'].includes(task.recurring) && (
+                              <span className="inline-flex items-center gap-1 text-sm text-blossom-pink">
+                                <Repeat className="w-3 h-3" />
+                                {task.recurring === 'daily' ? 'Daily' : 'Weekly'}
                               </span>
                             )}
 

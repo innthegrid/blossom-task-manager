@@ -9,6 +9,7 @@ This is a full-stack web application developed as a learning project to demonstr
 - **Complete CRUD Operations**: Create, read, update, and delete tasks with real-time updates
 - **Smart Task Organizaton**: Priority levels (low/medium/high), status tracking (on track/complete/overdue), and deadlines
 - **Subtasks Support**: Break complex tasks into manageable steps with individual completion tracking
+- **Recurring Tasks**: Set a dated task to repeat daily or weekly. Completing it keeps the original and schedules the next task from its due date, with subtasks reset. To stop future repeats, set **Repeat** to **Never** on the open occurrence. An occurrence already created stays on the dashboard.
 - **Categories & Tags**: Dual organizational system with preset icons and custom colors
 - **Archive System**: Move completed tasks to archive for reference while keeping dashboard clean
 - **Advanced Filtering**: Filter by status, priority, and category

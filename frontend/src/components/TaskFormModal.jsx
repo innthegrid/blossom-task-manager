@@ -1,73 +1,46 @@
 import { useState, useEffect } from 'react'
-import { X, Calendar, Tag, Tags, Star, Check, Plus, Pencil } from 'lucide-react'
+import { X, Calendar, Tag, Tags, Star, Check, Plus, Pencil, Repeat } from 'lucide-react'
 import { taskService } from '../services/taskService'
 import { categoryService } from '../services/categoryService'
 
-const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
+const TaskFormModal = ({ isOpen, editingTask, ...props }) => {
+  if (!isOpen) return null
+  return <TaskForm key={editingTask?.id ?? 'new'} editingTask={editingTask} {...props} />
+}
+
+const TaskForm = ({ onClose, editingTask, onTaskSaved }) => {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(false)
-
-  // Form state
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    priority: 'medium',
-    dueDate: '',
-    categoryId: '',
-    tags: [],
-    subtasks: [],
-  })
-
+  const [saveError, setSaveError] = useState('')
+  const [formData, setFormData] = useState(() => ({
+    title: editingTask?.title ?? '',
+    description: editingTask?.description ?? '',
+    priority: editingTask?.priority ?? 'medium',
+    dueDate: editingTask?.dueDate?.slice(0, 10) ?? '',
+    recurring: ['daily', 'weekly'].includes(editingTask?.recurring) ? editingTask.recurring : '',
+    categoryId: editingTask?.categoryId ?? '',
+    tags: editingTask?.tags ?? [],
+    subtasks: editingTask?.subtasks ?? [],
+  }))
   const [newTag, setNewTag] = useState('')
   const [newSubtask, setNewSubtask] = useState('')
 
-  // Load categories when modal opens
   useEffect(() => {
-    if (isOpen) {
-      loadCategories()
-      if (editingTask) {
-        // Format dueDate for the date input (YYYY-MM-DD)
-        let formattedDueDate = ''
-        if (editingTask.dueDate) {
-          const date = new Date(editingTask.dueDate)
-          formattedDueDate = date.toISOString().split('T')[0]
-        }
+    let active = true
+    categoryService.getCategories()
+      .then((data) => {
+        if (active) setCategories(data.categories || [])
+      })
+      .catch((error) => console.error('Failed to load categories:', error))
 
-        setFormData({
-          title: editingTask.title,
-          description: editingTask.description || '',
-          priority: editingTask.priority,
-          dueDate: formattedDueDate,
-          categoryId: editingTask.categoryId || '',
-          tags: editingTask.tags || [],
-          subtasks: editingTask.subtasks || [],
-        })
-      } else {
-        // Reset form for new task
-        setFormData({
-          title: '',
-          description: '',
-          priority: 'medium',
-          dueDate: '',
-          categoryId: '',
-          tags: [],
-          subtasks: [],
-        })
-      }
+    return () => {
+      active = false
     }
-  }, [isOpen, editingTask])
-
-  const loadCategories = async () => {
-    try {
-      const data = await categoryService.getCategories()
-      setCategories(data.categories || [])
-    } catch (error) {
-      console.error('Failed to load categories:', error)
-    }
-  }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSaveError('')
     setLoading(true)
 
     try {
@@ -80,7 +53,7 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
       onTaskSaved?.()
       onClose()
     } catch (error) {
-      console.error('Failed to save task:', error)
+      setSaveError(error.error || 'Could not save the task. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -134,8 +107,6 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
       subtasks: updatedSubtasks,
     })
   }
-
-  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -220,18 +191,39 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
 
               {/* Due Date */}
               <div>
-                <label className="block text-sm font-medium text-blossom-dark mb-2">
+                <label htmlFor="task-due-date" className="block text-sm font-medium text-blossom-dark mb-2">
                   <Calendar className="w-4 h-4 inline mr-1" />
-                  Due Date
+                  Due Date{formData.recurring ? ' *' : ''}
                 </label>
                 <input
+                  id="task-due-date"
                   type="date"
+                  required={Boolean(formData.recurring)}
                   value={formData.dueDate}
                   onChange={(e) =>
                     setFormData({ ...formData, dueDate: e.target.value })
                   }
                   className="input-blossom text-blossom-dark"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="task-repeat" className="block text-sm font-medium text-blossom-dark mb-2">
+                  <Repeat className="w-4 h-4 inline mr-1" />
+                  Repeat
+                </label>
+                <select
+                  id="task-repeat"
+                  value={formData.recurring}
+                  onChange={(e) =>
+                    setFormData({ ...formData, recurring: e.target.value })
+                  }
+                  className="input-blossom text-blossom-dark"
+                >
+                  <option value="">Never</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                </select>
               </div>
 
               {/* Category */}
@@ -372,6 +364,10 @@ const TaskFormModal = ({ isOpen, onClose, editingTask, onTaskSaved }) => {
                 </p>
               </div>
             </div>
+
+            {saveError && (
+              <p role="alert" className="text-sm text-blossom-red-text">{saveError}</p>
+            )}
 
             {/* Form Actions */}
             <div className="flex gap-3">
