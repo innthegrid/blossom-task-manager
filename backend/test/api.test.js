@@ -210,3 +210,75 @@ test('demo seeding preserves existing tasks and demo edits on repeat runs', asyn
     assert.equal(ownerAfter.task.title, existingTask.title);
     await request('/auth/login', { method: 'POST', body: { email: demoEmail, password } });
 });
+
+test('concurrent completions of a weekly task create one dated successor with fresh subtasks', async () => {
+    const { tokens: { accessToken: token } } = await register();
+    const original = await createTask(token, {
+        title: 'Water the plants',
+        priority: 'high',
+        tags: ['garden'],
+        dueDate: '2026-12-28',
+        recurring: 'weekly',
+        subtasks: [{ title: 'Check the soil', completed: true }],
+    });
+    const path = `/tasks/${original.id}`;
+    const completed = await Promise.all([
+        request(path, { method: 'PUT', token, body: { status: 'completed' } }),
+        request(`${path}/toggle`, { method: 'PATCH', token, body: { completed: true } }),
+    ]);
+    assert.ok(completed.every(({ task }) => task.status === 'completed' && task.completedAt));
+
+    const { tasks } = await request('/tasks', { token });
+    assert.equal(tasks.length, 2);
+    const next = tasks.find(({ id }) => id !== original.id);
+    assert.equal(next.status, 'pending');
+    assert.equal(next.completedAt, null);
+    assert.equal(next.dueDate, '2027-01-04T00:00:00.000Z');
+    assert.equal(next.recurring, 'weekly');
+    assert.equal(next.recurrenceSeriesId, original.recurrenceSeriesId);
+    assert.equal(next.title, original.title);
+    assert.equal(next.priority, original.priority);
+    assert.deepEqual(next.tags, ['garden']);
+    assert.deepEqual(next.subtasks.map(({ title, completed }) => ({ title, completed })), [
+        { title: 'Check the soil', completed: false },
+    ]);
+
+    // Reopening and moving the original cannot create a second successor.
+    await request(path, {
+        method: 'PUT', token, body: { status: 'pending', dueDate: '2026-12-29' },
+    });
+    await request(path, { method: 'PUT', token, body: { status: 'completed' } });
+    assert.equal((await request('/tasks', { token })).tasks.length, 2);
+});
+
+test('repeat rules validate dates, advance daily, and can be turned off', async () => {
+    const { tokens: { accessToken: token } } = await register();
+    await createTask(token, { title: 'No date', recurring: 'daily' }, 400);
+    await createTask(token, { title: 'Impossible date', recurring: 'daily', dueDate: '2026-02-30' }, 400);
+    await createTask(token, { title: 'Unsupported', recurring: 'monthly', dueDate: '2026-03-08' }, 400);
+
+    const original = await createTask(token, { title: 'Morning checklist', dueDate: '2026-03-08' });
+    const path = `/tasks/${original.id}`;
+    await request(path, { method: 'PUT', token, body: { recurring: 'daily' } });
+    await request(path, { method: 'PUT', token, body: { dueDate: null }, status: 400 });
+    await request(path, {
+        method: 'PUT', token,
+        body: { status: 'completed', subtasks: [{ title: 'New checklist item', completed: true }] },
+    });
+    const { tasks } = await request('/tasks', { token });
+    assert.equal(tasks.length, 2);
+    const next = tasks.find(({ id }) => id !== original.id);
+    assert.equal(next.dueDate, '2026-03-09T00:00:00.000Z');
+    assert.equal(next.subtasks[0].title, 'New checklist item');
+    assert.equal(next.subtasks[0].completed, false);
+
+    const nextPath = `/tasks/${next.id}`;
+    await request(nextPath, {
+        method: 'PUT', token, body: { dueDate: original.dueDate }, status: 409,
+    });
+    await request(nextPath, {
+        method: 'PUT', token, body: { recurring: null, dueDate: null },
+    });
+    await request(`${nextPath}/toggle`, { method: 'PATCH', token, body: { completed: true } });
+    assert.equal((await request('/tasks', { token })).tasks.length, 2);
+});

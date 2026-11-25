@@ -1,4 +1,6 @@
 const { prisma } = require('../config/database');
+const { applyTaskSchedule, parseDueDate, TaskScheduleError, updateTaskWithRecurrence } = require('../services/taskRecurrence');
+
 
 // Helper functions for consistent responses
 const blossomResponse = (res, data, message = 'Success', status = 200) => {
@@ -88,7 +90,7 @@ const getTaskById = async (req, res) => {
 // Create a new task
 const createTask = async (req, res) => {
     try {
-        const { title, description, priority, dueDate, categoryId, tags, subtasks } = req.body;
+        const { title, description, priority, dueDate, categoryId, tags, subtasks, recurring } = req.body;
         const userId = req.userId;
 
         console.log('Received create request:', { title, userId, categoryId, dueDate }); // Debug
@@ -114,14 +116,9 @@ const createTask = async (req, res) => {
             }
         };
 
-        // Handle dueDate
-        if (dueDate && dueDate !== '') {
-            if (typeof dueDate === 'string' && dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                taskData.dueDate = new Date(dueDate + 'T00:00:00.000Z');
-            } else {
-                taskData.dueDate = new Date(dueDate);
-            }
-        }
+        if (dueDate !== undefined) taskData.dueDate = parseDueDate(dueDate);
+        if (recurring !== undefined) taskData.recurring = recurring;
+        applyTaskSchedule(taskData);
 
         // Handle categoryId - convert empty string to null
         if (categoryId && categoryId !== '') {
@@ -149,6 +146,7 @@ const createTask = async (req, res) => {
 
         blossomResponse(res, { task }, 'Task created successfully!', 201);
     } catch (error) {
+        if (error instanceof TaskScheduleError) return blossomError(res, error.message, error.status);
         console.error('Error creating task:', error);
 
         // More detailed error logging
@@ -170,15 +168,6 @@ const updateTask = async (req, res) => {
 
         console.log('Received update request:', { taskId, userId, updates }); // Debug
 
-        // First check if task exists and belongs to user
-        const existing = await prisma.task.findFirst({
-            where: { id: taskId, userId }
-        });
-
-        if (!existing) {
-            return blossomError(res, 'Task not found', 404);
-        }
-
         // Prepare the update data
         const updateData = {};
 
@@ -197,16 +186,8 @@ const updateTask = async (req, res) => {
             };
         }
 
-        // Handle dueDate
-        if (updates.dueDate !== undefined) {
-            if (updates.dueDate === '' || updates.dueDate === null) {
-                updateData.dueDate = null;
-            } else if (typeof updates.dueDate === 'string' && updates.dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                updateData.dueDate = new Date(updates.dueDate + 'T00:00:00.000Z');
-            } else {
-                updateData.dueDate = new Date(updates.dueDate);
-            }
-        }
+        if (updates.dueDate !== undefined) updateData.dueDate = parseDueDate(updates.dueDate);
+        if (updates.recurring !== undefined) updateData.recurring = updates.recurring;
 
         // Handle categoryId - convert empty string to null
         if (updates.categoryId !== undefined) {
@@ -232,17 +213,14 @@ const updateTask = async (req, res) => {
 
         console.log('Update data to send to Prisma:', updateData); // Debug
 
-        const task = await prisma.task.update({
-            where: { id: taskId },
-            data: updateData,
-            include: {
-                category: true,
-                subtasks: true
-            }
-        });
+        const task = await updateTaskWithRecurrence(taskId, userId, updateData);
 
         blossomResponse(res, { task }, 'Task updated successfully!');
     } catch (error) {
+        if (error instanceof TaskScheduleError) return blossomError(res, error.message, error.status);
+        if (error.code === 'P2002' && error.meta?.target?.includes('recurrenceSeriesId')) {
+            return blossomError(res, 'This series already has a task due on that date.', 409);
+        }
         console.error('Error updating task:', error);
 
         // More detailed error logging
@@ -317,28 +295,15 @@ const toggleTask = async (req, res) => {
         const taskId = req.params.id;
         const { completed } = req.body;
 
-        // Check if task exists and belongs to user
-        const task = await prisma.task.findFirst({
-            where: { id: taskId, userId }
-        });
-
-        if (!task) {
-            return blossomError(res, 'Task not found', 404);
-        }
-
         const newStatus = completed ? 'completed' : 'pending';
-
-        const updatedTask = await prisma.task.update({
-            where: { id: taskId },
-            data: { status: newStatus },
-            include: { category: true }
-        });
+        const updatedTask = await updateTaskWithRecurrence(taskId, userId, { status: newStatus });
 
         blossomResponse(res, {
             task: updatedTask,
             message: newStatus === 'completed' ? 'Task completed!' : 'Task marked as pending'
         });
     } catch (error) {
+        if (error instanceof TaskScheduleError) return blossomError(res, error.message, error.status);
         console.error('Error toggling task:', error);
         blossomError(res, 'Failed to toggle task status', 500);
     }

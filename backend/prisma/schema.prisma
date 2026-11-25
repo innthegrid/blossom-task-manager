@@ -59,7 +59,9 @@ model Task {
   priority    String    @default("medium") // low, medium, high
   dueDate     DateTime?
   completedAt DateTime? // Maintained by the task status trigger
-  recurring   String?   // null, daily, weekly, monthly
+  recurring   String?   // null, daily, weekly
+  recurrenceSeriesId String?
+  previousOccurrenceId String? @unique
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   userId      String
@@ -73,6 +75,7 @@ model Task {
   flowerEmoji String?   @default("🌸")
   isBlossom   Boolean   @default(true)
 
+  @@unique([recurrenceSeriesId, dueDate])
   @@map("tasks")
 }
 
