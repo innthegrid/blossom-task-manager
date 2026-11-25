@@ -2,7 +2,11 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // Secret key for signing tokens (from .env)
-const JWT_SECRET = process.env.JWT_SECRET || 'blossom-super-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET?.trim();
+
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is required. See backend/.env.example.');
+}
 
 // Token expiration time
 const TOKEN_EXPIRY = {
