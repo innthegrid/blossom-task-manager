@@ -58,6 +58,7 @@ model Task {
   status      String    @default("pending") // pending, overdue, completed, archived
   priority    String    @default("medium") // low, medium, high
   dueDate     DateTime?
+  completedAt DateTime? // Maintained by the task status trigger
   recurring   String?   // null, daily, weekly, monthly
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

@@ -130,12 +130,20 @@ test('task lifecycle preserves subtasks through completion, archive, and restore
     });
     const path = `/tasks/${task.id}`;
     assert.equal(task.status, 'pending');
+    assert.equal(task.completedAt, null);
     assert.equal(task.subtasks[0].completed, false);
 
     const completed = await request(`${path}/toggle`, {
         method: 'PATCH', token, body: { completed: true },
     });
     assert.equal(completed.task.status, 'completed');
+    const completion = completed.task.completedAt;
+    assert.ok(Number.isFinite(Date.parse(completion)));
+
+    const edited = await request(path, {
+        method: 'PUT', token, body: { title: 'Update demo', status: 'completed' },
+    });
+    assert.equal(edited.task.completedAt, completion);
 
     const archive = () => request('/tasks/archive/completed', { method: 'POST', token });
     assert.equal((await archive()).archivedCount, 1);
@@ -145,11 +153,25 @@ test('task lifecycle preserves subtasks through completion, archive, and restore
     assert.deepEqual(archived.tasks.map(({ id, status }) => ({ id, status })), [
         { id: task.id, status: 'archived' },
     ]);
+    assert.equal(archived.tasks[0].completedAt, completion);
 
     const restored = await request(`${path}/restore`, { method: 'PATCH', token });
     assert.equal(restored.task.status, 'pending');
+    assert.equal(restored.task.completedAt, null);
     assert.deepEqual(restored.task.subtasks, task.subtasks);
     assert.deepEqual((await request('/tasks/archive/list', { token })).tasks, []);
+
+    const recompleted = await request(path, {
+        method: 'PUT', token, body: { status: 'completed' },
+    });
+    assert.equal(recompleted.task.status, 'completed');
+    assert.ok(Date.parse(recompleted.task.completedAt) > Date.parse(completion));
+
+    const reopened = await request(`${path}/toggle`, {
+        method: 'PATCH', token, body: { completed: false },
+    });
+    assert.equal(reopened.task.status, 'pending');
+    assert.equal(reopened.task.completedAt, null);
 
     await request(path, { method: 'DELETE', token });
     await request(path, { token, status: 404 });
